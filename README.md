@@ -78,4 +78,4 @@ link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="CFW", m
 
 
 # Contributor
-This pakcage was written and maintained by [Changhyun Kwon](htttp://www.chkwon.net).
+This package was written and maintained by [Changhyun Kwon](http://www.chkwon.net).
