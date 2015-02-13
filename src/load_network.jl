@@ -27,27 +27,45 @@ type TA_Data
     total_od_flow::Float64
 
     travel_demand::Array
+    od_pairs::Array
+
+    toll_factor::Float64
+    distance_factor::Float64
+
+    best_objective::Float64
 end
 
 function load_ta_network(network_name="Sioux Falls")
 
+    toll_factor = 0
+    distance_factor = 0
+
     if network_name == "Sioux Falls"
         network_data_file = "SiouxFalls_net.txt"
         trip_table_file = "SiouxFalls_trips.txt"
+        best_objective = 4.231335287107440e6 #42.31335287107440
     elseif network_name == "Barcelona"
         network_data_file = "Barcelona_net.txt"
         trip_table_file = "Barcelona_trips.txt"
+        best_objective = 1
     elseif network_name =="Chicago Sketch"
         network_data_file = "ChicagoSketch_net.txt"
         trip_table_file = "ChicagoSketch_trips.txt"
+        best_objective = 1
+        toll_factor = 0.02
+        distance_factor = 0.04
     elseif network_name == "Anaheim"
         network_data_file = "Anaheim_net.txt"
         trip_table_file = "Anaheim_trips.txt"
+        best_objective = 1
     elseif network_name == "Winnipeg"
         network_data_file = "Winnipeg_net.txt"
         trip_table_file = "Winnipeg_trips.txt"
+        best_objective = 1
     end
 
+    network_data_file = joinpath(Pkg.dir("TrafficAssignment"), "data", network_data_file)
+    trip_table_file = joinpath(Pkg.dir("TrafficAssignment"), "data", trip_table_file)
 
 
 
@@ -141,6 +159,7 @@ function load_ta_network(network_name="Sioux Falls")
     @assert total_od_flow > 0
 
     travel_demand = zeros(number_of_zones, number_of_zones)
+    od_pairs = Array((Int64,Int64),0)
     while (line=readline(f)) != ""
         if contains(line, "Origin")
             origin = parseint( split(line)[2] )
@@ -152,6 +171,7 @@ function load_ta_network(network_name="Sioux Falls")
                     destination = parseint( strip(pair[1]) )
                     od_flow = parsefloat( strip(pair[2]) )
                     travel_demand[origin, destination] = od_flow
+                    push!(od_pairs, (origin, destination))
                     # println("origin=$origin, destination=$destination, flow=$od_flow")
                 end
             end
@@ -176,7 +196,11 @@ function load_ta_network(network_name="Sioux Falls")
         toll,
         link_type,
         total_od_flow,
-        travel_demand)
+        travel_demand,
+        od_pairs,
+        toll_factor,
+        distance_factor,
+        best_objective)
 
     return ta_data
 

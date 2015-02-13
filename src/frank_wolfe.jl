@@ -6,14 +6,17 @@
 include("misc.jl")
 
 
-function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", log="off", tol=1e-4)
+function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", log="off", tol=1e-3)
 
-    println("-------------------------------------")
-    println("Network Name: $(ta_data.network_name)")
-    println("Method: $method")
-    println("Line Search Step: $step")
-    println("Maximum Interation Number: $max_iter_no")
-    println("Tolerance for AEC: $tol")
+    if log=="on"
+        println("-------------------------------------")
+        println("Network Name: $(ta_data.network_name)")
+        println("Method: $method")
+        println("Line Search Step: $step")
+        println("Maximum Interation Number: $max_iter_no")
+        println("Tolerance for AEC: $tol")
+    end
+
 
     # unpacking data from ta_data
     network_name = ta_data.network_name
@@ -37,8 +40,12 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
     number_of_zones = ta_data.number_of_zones
     total_od_flow = ta_data.total_od_flow
     travel_demand = ta_data.travel_demand
+    od_pairs = ta_data.od_pairs
 
+    toll_factor = ta_data.toll_factor
+    distance_factor = ta_data.distance_factor
 
+    best_objective = ta_data.best_objective
 
 
 
@@ -50,52 +57,11 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
 
     function BPR(x)
         travel_time = free_flow_time .* ( 1.0 + B .* (x./capacity).^power )
-        # Link generalized cost = Link travel time + toll_factor * toll + distance_factor * distance
-
-        # travel_time = zeros(size(x))
-        #
-        # for i=1:length(travel_time)
-        #     println("-------")
-        #     println(free_flow_time[i])
-        #     println(B[i])
-        #     println(x[i])
-        #     println(capacity[i])
-        #     println(power[i])
-        #
-        #
-        #     travel_time[i] = free_flow_time[i] * ( 1.0 + B[i] * x[i]^power[i] / capacity[i]^power[i] )
-        # end
-        return travel_time
+        generalized_cost = travel_time + toll_factor *toll + distance_factor * link_length
+        return generalized_cost
     end
 
     function objective(x)
-        # println("===========================================================")
-        # println("===========================================================")
-        # println("free_flow_time===========================================================")
-        # println(free_flow_time)
-        # println("===========================================================")
-        # println("===========================================================")
-        # println("x===========================================================")
-        # println(x)
-        # println("===========================================================")
-        # println("===========================================================")
-        # println("power===========================================================")
-        # println(power)
-        # println("===========================================================")
-        # println("===========================================================")
-        # println("B===========================================================")
-        # println(B)
-        # println("===========================================================")
-        # println("===========================================================")
-        # println("capacity===========================================================")
-        # println(capacity)
-
-        # for i=1:length(x)
-        #     if x[i] < 0
-        #         println(x[i])
-        #     end
-        # end
-
         value = free_flow_time .* ( x + B.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
         return sum(value)
     end
@@ -212,7 +178,9 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
     Nk = 0
     Dk = 0
 
-    tauk = 1
+    tauk = 0
+    is_first_iteration = false
+    is_second_iteration = false
 
     sk_BFW = yk_FW
     sk_BFW_old = yk_FW
@@ -226,20 +194,13 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
 
 
     function fk(tau)
-        x = xk+tau*dk
-        value = objective(x)
+        value = objective(xk+tau*dk)
         return value
     end
 
     function lower_bound_k(x, xk)
         value = objective(xk) + dot( BPR(xk), ( x - xk) )
     end
-
-
-
-
-
-
 
 
     for k=1:max_iter_no
@@ -256,48 +217,79 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
         if method == "FW" # Original Frank-Wolfe
             dk = dk_FW
         elseif method == "CFW" # Conjugate Direction F-W
-            if k==1
+            if k==1 || tauk > 0.999999 # If tauk=1, then start the process all over again.
                 sk_CFW = yk_FW
-            end
-
-            dk_bar = sk_CFW - xk
-
-            Nk = dot( dk_bar, Hk_diag .* dk_FW )
-            Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
-
-            delta = 0.2 # What value should I use?
-            alphak = 0
-            if Dk !=0 && 0 <= Nk/Dk <= 1-delta
-                alphak = Nk/Dk
-            elseif Dk !=0 && Nk/Dk > 1-delta
-                alphak = 1-delta
+                dk_CFW = sk_CFW - xk
             else
-                alphak = 0
-            end
+                dk_bar = sk_CFW - xk # sk_CFW from the previous iteration k-1
 
-            sk_CFW = alphak * sk_CFW + (1-alphak) * yk_FW
-            dk_CFW = sk_CFW - xk
+                Nk = dot( dk_bar, Hk_diag .* dk_FW )
+                Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
+
+                delta = 0.0001 # What value should I use?
+                alphak = 0
+                if Dk !=0 && 0 <= Nk/Dk <= 1-delta
+                    alphak = Nk/Dk
+                elseif Dk !=0 && Nk/Dk > 1-delta
+                    alphak = 1-delta
+                else
+                    alphak = 0
+                end
+
+                # Generating new sk_CFW and dk_CFW
+                sk_CFW = alphak * sk_CFW + (1-alphak) * yk_FW
+                dk_CFW = sk_CFW - xk
+            end
 
             # Feasible Direction to Use for CFW
             dk = dk_CFW
         elseif method == "BFW" # Bi-Conjugate Direction F-W
 
-            if k==1
+            if tauk > 0.999999
+                is_first_iteration = true
+                is_second_iteration = true
+            end
+
+            if k==1 || is_first_iteration       # First Iteration is like FW
+                # println("here")
                 sk_BFW_old = yk_FW
                 dk_BFW = dk_FW
-            elseif k==2
-                sk_BFW = yk_FW
-                dk_BFW = dk_FW
-            elseif tauk > 0.99
-                sk_BFW_old = sk_BFW
-                sk_BFW = yk_FW
-                dk_BFW = dk_FW
+                is_first_iteration = false
+            elseif k==2 || is_second_iteration  # Second Iteration is like CFW
+                # println("there")
+                dk_bar = sk_BFW_old - xk # sk_BFW_old from the previous iteration 1
+
+                Nk = dot( dk_bar, Hk_diag .* dk_FW )
+                Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
+
+                delta = 0.0001 # What value should I use?
+                alphak = 0
+                if Dk !=0 && 0 <= Nk/Dk <= 1-delta
+                    alphak = Nk/Dk
+                elseif Dk !=0 && Nk/Dk > 1-delta
+                    alphak = 1-delta
+                else
+                    alphak = 0
+                end
+
+                # Generating new sk_BFW and dk_BFW
+                sk_BFW = alphak * sk_BFW_old + (1-alphak) * yk_FW
+                dk_BFW = sk_BFW - xk
+
+                is_second_iteration = false
             else
+                # println("over there $tauk")
+                # sk_BFW, tauk is from iteration k-1
+                # sk_BFW_old is from iteration k-2
+
                 dk_bar  = sk_BFW - xk
                 dk_bbar = tauk * sk_BFW - xk + (1-tauk) * sk_BFW_old
 
                 muk = - dot( dk_bbar, Hk_diag .* dk_FW ) / dot( dk_bbar, Hk_diag .* (sk_BFW_old - sk_BFW) )
                 nuk = - dot( dk_bar, Hk_diag .* dk_FW ) / dot( dk_bar, Hk_diag .* dk_bar) + muk*tauk/(1-tauk)
+
+                muk = max(0, muk)
+                nuk = max(0, nuk)
 
                 # println(sk_BFW_old-sk_BFW)
 
@@ -320,6 +312,7 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
         else
             error("The type of Frank-Wolfe method is specified incorrectly. Use FW, CFW, or BFW.")
         end
+        # dk is now identified.
 
 
         if step=="exact"
@@ -329,27 +322,24 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="newton", 
         elseif step=="newton"
             # Newton step
             tauk = - dot( gradient(xk), dk ) / dot( dk, Hk_diag.*dk )
-            @assert minimum(tauk)>=0
+            tauk = max(0, min(1, tauk))
+            @assert 0<= tauk <= 1
         end
-
-
 
 
         # Average Excess Cost
         average_excess_cost = ( dot(xk, travel_time) - dot(yk_FW, travel_time) ) / sum(travel_demand)
-
-        # error = norm(new_x - xk) / norm(xk)
-
         if log=="on"
             println("k=$k,\ttauk=$tauk,\tobjective=$(objective(xk)),\taec=$average_excess_cost")
         end
 
+        # rel_gap = ( objective(xk) - best_objective ) / best_objective
 
         # Convergence Test
         if average_excess_cost < tol
+        # if rel_gap < tol
             break
         end
-
 
         # Update x
         new_x = xk + tauk*dk

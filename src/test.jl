@@ -14,7 +14,18 @@ ta_data = load_ta_network("Sioux Falls")
 
 # x, travel_time, objective = ta_frank_wolfe(ta_data, "FW")
 
+
+# tic()
+# link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="FW",
+#                         max_iter_no=50000, step="newton", log="on", tol=1e-3)
+# toc()
+
+# tic()
+# link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="CFW",
+#                         max_iter_no=50000, step="newton", log="on", tol=1e-3)
+# toc()
+
 tic()
 link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="BFW",
-                        max_iter_no=50000, step="exact", log="on", tol=1e-4)
+                        max_iter_no=50000, step="newton", log="off", tol=1e-2)
 toc()
