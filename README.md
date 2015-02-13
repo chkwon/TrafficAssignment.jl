@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
 
-This package does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern.
+This package does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
 
 # Install
 
