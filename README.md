@@ -65,7 +65,7 @@ end
 This function implements methods to find traffic equilibrium flows: currently, Frank-Wolfe (FW) method, Conjugate FW (CFW) method, and Bi-conjugate FW (BFW) method.
 
 References:
-- [Mitradjieva, M., & Lindberg, P. O. (2013). The Stiff Is Moving-Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment*. Transportation Science, 47(2), 280-293.](http://pubsonline.informs.org/doi/abs/10.1287/trsc.1120.0409)
+- [Mitradjieva, M., & Lindberg, P. O. (2013). The Stiff Is Moving-Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment. *Transportation Science*, 47(2), 280-293.](http://pubsonline.informs.org/doi/abs/10.1287/trsc.1120.0409)
 
 Example:
 ```julia
@@ -77,7 +77,7 @@ Available optional arguments:
 * step="exact" / "newton" : exact line search using golden section / a simple Newton-type step (default: exact)
 * log="on" / "off" : displays information from each iteration or not (default: off)
 * max_iter_no=*integer value* : maximum number of iterations (default: 2000)
-* tol="numeric value" : tolerance for the Average Excess Cost (AEC) (default: 1e-3)
+* tol=*numeric value* : tolerance for the Average Excess Cost (AEC) (default: 1e-3)
 
 For example, one may do:
 ```julia
