@@ -4,6 +4,16 @@
 
 This package does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern.
 
+# Install
+
+This package requires [Graphs.jl](https://github.com/JuliaLang/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl).
+
+```julia
+julia> Pkg.add("Graphs")
+julia> Pkg.add("Optim")
+julia> Pkg.clone("https://github.com/chkwon/TrafficAssignment.jl.git")
+```
+
 # load_ta_network
 
 This function loads a network data available in Hillel Bar-Ger's [Transportation Network Test Problems](http://www.bgu.ac.il/~bargera/tntp/).
