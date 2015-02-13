@@ -1,6 +1,9 @@
 language: cpp
 compiler:
   - clang
+os:
+    - linux
+    - osx  
 notifications:
   email: false
 env:
@@ -15,5 +18,6 @@ before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
   - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.add("Graphs"); Pkg.add("Optim"); Pkg.test("TrafficAssignment")'
+  - julia -e 'Pkg.test("HttpParser", coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("TrafficAssignment")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
