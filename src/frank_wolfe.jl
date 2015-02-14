@@ -100,32 +100,7 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
         #Link travel time = free flow time * ( 1 + B * (flow/capacity)^Power ).
     end
 
-    # function all_or_nothing(travel_time)
-    #     state = []
-    #     path = []
-    #     v = []
-    #     x = zeros(size(start_node))
-    #
-    #     for r=1:size(travel_demand)[1]
-    #         # for each origin node r, find shortest paths to all destination nodes
-    #         state = dijkstra_shortest_paths(graph, travel_time, r)
-    #
-    #         for s=1:size(travel_demand)[2]
-    #             # for each destination node s, find the shortest-path vector
-    #             v = get_vector(state, r, s, start_node, end_node)
-    #
-    #             # load travel demand
-    #             x = x + v * travel_demand[r,s]
-    #         end
-    #     end
-    #
-    #     return x
-    # end
-
-
-
-
-    function all_or_nothing(travel_time)
+    function all_or_nothing_single(travel_time)
         state = []
         path = []
         v = []
@@ -133,21 +108,14 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
         for r=1:size(travel_demand)[1]
             # for each origin node r, find shortest paths to all destination nodes
-            # if there is any travel demand starting from node r.
-            if sum(travel_demand, 2)[r] > 0.0
-                state = dijkstra_shortest_paths(graph, travel_time, r)
-            end
+            state = dijkstra_shortest_paths(graph, travel_time, r)
 
             for s=1:size(travel_demand)[2]
                 # for each destination node s, find the shortest-path vector
-                # v = get_vector(state, r, s, start_node, end_node)
+                v = get_vector(state, r, s, start_node, end_node)
 
-                if travel_demand[r,s] > 0.0
-                    v = get_vector(state, r, s, link_dic)
-
-                    # load travel demand
-                    x = x + v * travel_demand[r,s]
-                end
+                # load travel demand
+                x = x + v * travel_demand[r,s]
             end
         end
 
@@ -155,7 +123,51 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
     end
 
 
+    # # parallel computing version
+    function all_or_nothing_parallel(travel_time)
+        state = []
+        path = []
+        v = []
+        vv = zeros(size(start_node))
+        x = zeros(size(start_node))
 
+        x = x + @parallel (+) for r=1:size(travel_demand)[1]
+            # for each origin node r, find shortest paths to all destination nodes
+            # if there is any travel demand starting from node r.
+            vv = zeros(size(start_node))
+
+            if sum(travel_demand, 2)[r] > 0.0
+                state = dijkstra_shortest_paths(graph, travel_time, r)
+
+                for s=1:size(travel_demand)[2]
+                    # for each destination node s, find the shortest-path vector
+                    # v = get_vector(state, r, s, start_node, end_node)
+
+                    if travel_demand[r,s] > 0.0
+                        v = get_vector(state, r, s, link_dic)
+
+                        # load travel demand
+                        vv = vv + v * travel_demand[r,s]
+                    end
+                end
+
+            end
+
+            vv
+        end
+
+        return x
+    end
+
+
+    function all_or_nothing(travel_time)
+        if nprocs() > 1 # if multiple CPU processes are available
+            all_or_nothing_parallel(travel_time)
+        else
+            all_or_nothing_single(travel_time)
+            # when nprocs()==1, using @parallel just adds unnecessary setup time. I guess.
+        end
+    end
 
 
     # Finding a starting feasible solution
