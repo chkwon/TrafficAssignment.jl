@@ -91,6 +91,21 @@ link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="CFW", m
 ```
 
 
+# Parallel Computing
+
+During the all-or-nothing allocation procedure, this package supports parallel computing. If you want to start with two processes, use the following command to start Julia
+
+```
+julia -p 2
+```
+
+When you directly run your script, use the following command:
+
+```
+julia -p 2 your-script.jl
+```
+
+
 
 # Contributor
 This package is written and maintained by [Changhyun Kwon](http://www.chkwon.net).
