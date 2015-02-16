@@ -10,6 +10,4 @@ ta_data = load_ta_network("Sioux Falls")
 # ta_data = load_ta_network("Winnipeg")
 
 
-# tic()
-@time link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="on", tol=1e-3, max_iter_no=20)
-# toc()
+link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="on", tol=1e-3, max_iter_no=20)

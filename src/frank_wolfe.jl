@@ -8,6 +8,8 @@ include("misc.jl")
 
 function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", log="off", tol=1e-3)
 
+    setup_time = time()
+
     if log=="on"
         println("-------------------------------------")
         println("Network Name: $(ta_data.network_name)")
@@ -53,6 +55,16 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
     # preparing a graph
     graph = create_graph(start_node, end_node)
     link_dic = sparse(start_node, end_node, 1:number_of_links)
+
+    setup_time = time() - setup_time
+
+    if log=="on"
+        println("Setup time = $setup_time seconds")
+    end
+
+
+
+
 
 
     function BPR(x)
@@ -168,6 +180,17 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
             # when nprocs()==1, using @parallel just adds unnecessary setup time. I guess.
         end
     end
+
+
+
+
+
+
+
+
+
+
+    iteration_time = time()
 
 
     # Finding a starting feasible solution
@@ -361,6 +384,13 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
     end
 
+
+
+    iteration_time = time() - iteration_time
+
+    if log=="on"
+        println("Iteration time = $iteration_time seconds")
+    end
 
     return xk, travel_time, objective(xk)
 

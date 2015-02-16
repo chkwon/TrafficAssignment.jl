@@ -7,13 +7,14 @@ This package does basically two tasks: (1) loading a network data and (2) findin
 
 # Install
 
-This package requires [Graphs.jl](https://github.com/JuliaLang/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl).
 
 ```julia
-julia> Pkg.add("Graphs")
-julia> Pkg.add("Optim")
 julia> Pkg.clone("https://github.com/chkwon/TrafficAssignment.jl.git")
 ```
+
+This will install [Graphs.jl](https://github.com/JuliaLang/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
+
+
 
 # load_ta_network
 
