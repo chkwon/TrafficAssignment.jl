@@ -3,18 +3,21 @@
 [![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
 [![Coverage Status](https://coveralls.io/repos/chkwon/TrafficAssignment.jl/badge.svg)](https://coveralls.io/r/chkwon/TrafficAssignment.jl)
 
-This package does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
+This package for [the Julia Language](http://www.julialang.org) does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
 
 # Install
 
 
 ```julia
-julia> Pkg.clone("https://github.com/chkwon/TrafficAssignment.jl.git")
+julia> Pkg.add("TrafficAssignment")
 ```
 
 This will install [Graphs.jl](https://github.com/JuliaLang/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
 
-
+To check if works
+```julia
+julia> Pkg.test("TrafficAssignment")
+```
 
 # load_ta_network
 
