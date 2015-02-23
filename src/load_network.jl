@@ -85,7 +85,7 @@ function load_ta_network(network_name="Sioux Falls")
     while (line=readline(n)) != ""
         if contains(line, "<NUMBER OF ZONES>")
             number_of_zones = parseint( line[ search(line, '>')+1 : end-1 ] )
-        elseif contains(line, "<NUMBER_OF_NODES>")
+        elseif contains(line, "<NUMBER OF NODES>")
             number_of_nodes = parseint( line[ search(line, '>')+1 : end-1 ] )
         elseif contains(line, "<FIRST THRU NODE>")
             first_thru_node = parseint( line[ search(line, '>')+1 : end-1 ] )

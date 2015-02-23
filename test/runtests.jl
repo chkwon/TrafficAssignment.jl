@@ -5,7 +5,7 @@ using Base.Test
 
 ta_data = load_ta_network("Sioux Falls")
 # ta_data = load_ta_network("Anaheim")
-# ta_data = load_ta_network("Barcelona")
+ta_data = load_ta_network("Barcelona")
 # ta_data = load_ta_network("Chicago Sketch")
 # ta_data = load_ta_network("Winnipeg")
 

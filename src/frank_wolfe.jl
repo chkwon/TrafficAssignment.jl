@@ -68,14 +68,27 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
 
     function BPR(x)
-        travel_time = free_flow_time .* ( 1.0 + B .* (x./capacity).^power )
-        generalized_cost = travel_time + toll_factor *toll + distance_factor * link_length
-        return generalized_cost
+        # travel_time = free_flow_time .* ( 1.0 + B .* (x./capacity).^power )
+        # generalized_cost = travel_time + toll_factor *toll + distance_factor * link_length
+        # return generalized_cost
+
+        bpr = similar(x)
+        for i=1:length(bpr)
+            bpr[i] = free_flow_time[i] * ( 1.0 + B[i] * (x[i]/capacity[i])^power[i] )
+            bpr[i] += toll_factor *toll[i] + distance_factor * link_length[i]
+        end
+        return bpr
     end
 
     function objective(x)
-        value = free_flow_time .* ( x + B.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
-        return sum(value)
+        # value = free_flow_time .* ( x + B.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
+        # return sum(value)
+
+        sum = 0
+        for i=1:length(x)
+            sum += free_flow_time[i] * ( x[i] + B[i]* ( x[i]^(power[i]+1)) / (capacity[i]^power[i]) / (power[i]+1))
+        end
+        return sum
     end
 
     function gradient(x)
@@ -112,10 +125,13 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
         #Link travel time = free flow time * ( 1 + B * (flow/capacity)^Power ).
     end
 
+
+    spp_total = 0
+    vvv_total = 0
+
     function all_or_nothing_single(travel_time)
         state = []
         path = []
-        v = []
         x = zeros(size(start_node))
 
         for r=1:size(travel_demand)[1]
@@ -124,10 +140,8 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
             for s=1:size(travel_demand)[2]
                 # for each destination node s, find the shortest-path vector
-                v = get_vector(state, r, s, start_node, end_node)
-
                 # load travel demand
-                x = x + v * travel_demand[r,s]
+                x = x + travel_demand[r,s] * get_vector(state, r, s, start_node, end_node)
             end
         end
 
@@ -139,7 +153,6 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
     function all_or_nothing_parallel(travel_time)
         state = []
         path = []
-        v = []
         vv = zeros(size(start_node))
         x = zeros(size(start_node))
 
@@ -156,10 +169,8 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
                     # v = get_vector(state, r, s, start_node, end_node)
 
                     if travel_demand[r,s] > 0.0
-                        v = get_vector(state, r, s, link_dic)
-
                         # load travel demand
-                        vv = vv + v * travel_demand[r,s]
+                        vv = vv + travel_demand[r,s] * get_vector(state, r, s, link_dic)
                     end
                 end
 
