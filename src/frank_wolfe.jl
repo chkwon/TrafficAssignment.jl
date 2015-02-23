@@ -17,6 +17,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         println("Line Search Step: $step")
         println("Maximum Interation Number: $max_iter_no")
         println("Tolerance for AEC: $tol")
+        println("Number of processors: ", nprocs())
     end
 
 
@@ -87,6 +88,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         sum = 0
         for i=1:length(x)
             sum += free_flow_time[i] * ( x[i] + B[i]* ( x[i]^(power[i]+1)) / (capacity[i]^power[i]) / (power[i]+1))
+            sum += toll_factor *toll[i] + distance_factor * link_length[i]
         end
         return sum
     end
@@ -375,7 +377,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
         # Average Excess Cost
         average_excess_cost = ( dot(xk, travel_time) - dot(yk_FW, travel_time) ) / sum(travel_demand)
-        if log=="on"
+        if log==:on
             println("k=$k,\ttauk=$tauk,\tobjective=$(objective(xk)),\taec=$average_excess_cost")
         end
 
