@@ -6,11 +6,11 @@
 include("misc.jl")
 
 
-function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", log="off", tol=1e-3)
+function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3)
 
     setup_time = time()
 
-    if log=="on"
+    if log==:on
         println("-------------------------------------")
         println("Network Name: $(ta_data.network_name)")
         println("Method: $method")
@@ -58,7 +58,7 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
     setup_time = time() - setup_time
 
-    if log=="on"
+    if log==:on
         println("Setup time = $setup_time seconds")
     end
 
@@ -260,9 +260,9 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
         Hk_diag = hessian_diag(xk) # Hk_diag is a diagonal vector of matrix Hk
 
         # Finding a feasible direction
-        if method == "FW" # Original Frank-Wolfe
+        if method == :fw # Original Frank-Wolfe
             dk = dk_FW
-        elseif method == "CFW" # Conjugate Direction F-W
+        elseif method == :cfw # Conjugate Direction F-W
             if k==1 || tauk > 0.999999 # If tauk=1, then start the process all over again.
                 sk_CFW = yk_FW
                 dk_CFW = sk_CFW - xk
@@ -289,7 +289,7 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
             # Feasible Direction to Use for CFW
             dk = dk_CFW
-        elseif method == "BFW" # Bi-Conjugate Direction F-W
+        elseif method == :bfw # Bi-Conjugate Direction F-W
 
             if tauk > 0.999999
                 is_first_iteration = true
@@ -356,16 +356,16 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
             # Feasible Direction to Use for BFW
             dk = dk_BFW
         else
-            error("The type of Frank-Wolfe method is specified incorrectly. Use FW, CFW, or BFW.")
+            error("The type of Frank-Wolfe method is specified incorrectly. Use :fw, :cfw, or :bfw.")
         end
         # dk is now identified.
 
 
-        if step=="exact"
+        if step==:exact
             # Line Search from xk in the direction dk
             optk = optimize(fk, 0.0, 1.0, method = :golden_section)
             tauk = optk.minimum
-        elseif step=="newton"
+        elseif step==:newton
             # Newton step
             tauk = - dot( gradient(xk), dk ) / dot( dk, Hk_diag.*dk )
             tauk = max(0, min(1, tauk))
@@ -399,7 +399,7 @@ function ta_frank_wolfe(ta_data; method="BFW", max_iter_no=2000, step="exact", l
 
     iteration_time = time() - iteration_time
 
-    if log=="on"
+    if log==:on
         println("Iteration time = $iteration_time seconds")
     end
 

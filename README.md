@@ -78,16 +78,16 @@ link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="off", tol=
 ```
 
 Available optional arguments:
-* method="FW" / "CFW" / "BFW" (default: BFW)
-* step="exact" / "newton" : exact line search using golden section / a simple Newton-type step (default: exact)
-* log="on" / "off" : displays information from each iteration or not (default: off)
-* max_iter_no=*integer value* : maximum number of iterations (default: 2000)
-* tol=*numeric value* : tolerance for the Average Excess Cost (AEC) (default: 1e-3)
+* method=:fw / :cfw / :bfw (default=:bfw)
+* step="exact" / "newton" : exact line search using golden section / a simple Newton-type step (default=:exact)
+* log=:on / :off : displays information from each iteration or not (default=:off)
+* max_iter_no=*integer value* : maximum number of iterations (default=2000)
+* tol=*numeric value* : tolerance for the Average Excess Cost (AEC) (default=1e-3)
 
 For example, one may do:
 ```julia
 ta_data = load_ta_network("Sioux Falls")
-link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method="CFW", max_iter_no=50000, step="newton", log="on", tol=1e-5)
+link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
 ```
 
 
