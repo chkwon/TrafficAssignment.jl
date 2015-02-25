@@ -15,6 +15,36 @@ function create_graph(start_node, end_node)
     return graph
 end
 
+
+
+function get_vector(state, origin, destination, link_dic)
+    current = destination
+    parent = -1
+    x = zeros(Int, maximum(link_dic))
+
+    while parent != origin
+        parent = state.parents[current]
+
+        link_idx = link_dic[parent,current]
+
+        if link_idx != 0
+            x[link_idx] = 1
+        end
+
+        current = parent
+    end
+
+    return x
+end
+
+
+
+
+
+
+
+
+
 # function get_shortest_path(start_node, end_node, link_length, origin, destination)
 #     @assert Base.length(start_node)==Base.length(end_node)
 #     @assert Base.length(start_node)==Base.length(link_length)
@@ -49,25 +79,3 @@ end
 #
 #     return x
 # end
-
-
-function get_vector(state, origin, destination, link_dic)
-    current = destination
-    parent = -1
-    x = zeros(Int, maximum(link_dic))
-
-    while parent != origin
-        parent = state.parents[current]
-
-        link_idx = link_dic[parent,current]
-
-        if link_idx != 0
-            x[link_idx] = 1
-        end
-
-        current = parent
-    end
-
-    return x
-end
-#
