@@ -143,7 +143,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
             for s=1:size(travel_demand)[2]
                 # for each destination node s, find the shortest-path vector
                 # load travel demand
-                x = x + travel_demand[r,s] * get_vector(state, r, s, start_node, end_node)
+                x = x + travel_demand[r,s] * get_vector(state, r, s, link_dic)
             end
         end
 
