@@ -22,7 +22,7 @@ julia> Pkg.test("TrafficAssignment")
 
 # load_ta_network
 
-This function loads a network data available in Hillel Bar-Ger's [Transportation Network Test Problems](http://www.bgu.ac.il/~bargera/tntp/).
+This function loads a network data available in Hillel Bar-Gera's [Transportation Network Test Problems](http://www.bgu.ac.il/~bargera/tntp/).
 
 Example:
 ```julia
