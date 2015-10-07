@@ -1,7 +1,7 @@
 module TrafficAssignment
 
 # package code goes here
-using Graphs, Optim
+using LightGraphs, Optim
 
 
 export

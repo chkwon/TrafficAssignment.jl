@@ -17,3 +17,9 @@ link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, st
 
 link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:fw, step=:exact, log=:on, tol=1e-3, max_iter_no=5)
 @assert abs( objective - 4.963799502172654e6 ) < 1e6
+
+
+
+tic()
+ta_frank_wolfe(ta_data, method=:fw, step=:exact, log=:off, tol=1e-7, max_iter_no=1000)
+toc()
