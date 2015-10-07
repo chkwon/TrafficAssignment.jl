@@ -1,6 +1,18 @@
 
 
+function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node)
 
+    no_node = length(vertices(graph))
+    no_arc = length(edges(graph))
+
+    distmx = Inf*ones(no_node, no_node)
+	for i in 1:no_arc
+		distmx[start_node[i], end_node[i]] = travel_time[i]
+	end
+
+    state = dijkstra_shortest_paths(graph, origin, distmx)
+    return state
+end
 
 function create_graph(start_node, end_node)
     @assert Base.length(start_node)==Base.length(end_node)
@@ -8,7 +20,7 @@ function create_graph(start_node, end_node)
     no_node = max(maximum(start_node), maximum(end_node))
     no_arc = Base.length(start_node)
 
-    graph = simple_inclist(no_node)
+    graph = DiGraph(no_node)
     for i=1:no_arc
         add_edge!(graph, start_node[i], end_node[i])
     end
@@ -22,11 +34,10 @@ function get_vector(state, origin, destination, link_dic)
     parent = -1
     x = zeros(Int, maximum(link_dic))
 
-    while parent != origin
+    while parent != origin && origin != destination
         parent = state.parents[current]
 
         link_idx = link_dic[parent,current]
-
         if link_idx != 0
             x[link_idx] = 1
         end
