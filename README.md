@@ -36,7 +36,7 @@ ta_data = load_ta_network("Sioux Falls")
 The return value is of the TA_Data type, which is defined as
 ```julia
 type TA_Data
-    network_name::String
+    network_name::AbstractString
 
     number_of_zones::Int64
     number_of_nodes::Int64
