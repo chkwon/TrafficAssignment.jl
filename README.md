@@ -13,7 +13,7 @@ This package for [the Julia Language](http://www.julialang.org) does basically t
 julia> Pkg.add("TrafficAssignment")
 ```
 
-This will install [Graphs.jl](https://github.com/JuliaLang/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
+This will install [LightGraphs.jl](https://github.com/JuliaLang/LightGraphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
 
 To check if works
 ```julia
