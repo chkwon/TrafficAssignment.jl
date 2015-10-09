@@ -1,20 +1,17 @@
-language: cpp
-compiler:
-  - clang
+language: julia
+os:
+    - linux
+    - osx
+julia:
+    - release
+    - nightly
+    - 0.3
+    - 0.4
 notifications:
-  email: false
-env:
-  matrix:
-    - JULIAVERSION="juliareleases"
-    - JULIAVERSION="julianightlies"
-before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia -y
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    email: false
 script:
-  - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.add("LightGraphs"); Pkg.add("Optim"); Pkg.test("TrafficAssignment")'
-  - julia -e 'Pkg.test("TrafficAssignment", coverage=true)'
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.add("LightGraphs"); Pkg.add("Optim"); Pkg.test("TrafficAssignment", coverage=true)'
 after_success:
-  - julia -e 'cd(Pkg.dir("TrafficAssignment")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+    - echo $TRAVIS_JULIA_VERSION
+    - julia -e 'cd(Pkg.dir("TrafficAssignment")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
