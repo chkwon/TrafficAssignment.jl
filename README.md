@@ -1,9 +1,13 @@
 # TrafficAssignment.jl
 
-[![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
-[![Coverage Status](https://coveralls.io/repos/chkwon/TrafficAssignment.jl/badge.svg)](https://coveralls.io/r/chkwon/TrafficAssignment.jl)
 [![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.3.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment&ver=0.3)
 [![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.4.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment&ver=0.4)
+
+[![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/8729wrjsv2rjga34?svg=true)](https://ci.appveyor.com/project/chkwon/trafficassignment-jl)
+[![Coverage Status](https://coveralls.io/repos/chkwon/TrafficAssignment.jl/badge.svg)](https://coveralls.io/r/chkwon/TrafficAssignment.jl)
+
+
 
 This package for [the Julia Language](http://www.julialang.org) does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
 
