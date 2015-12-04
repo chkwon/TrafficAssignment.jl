@@ -2,8 +2,8 @@
 
 function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node)
 
-    no_node = nv(g)
-    no_arc = ne(g)
+    no_node = nv(graph)
+    no_arc = ne(graph)
 
     distmx = Inf*ones(no_node, no_node)
 	for i in 1:no_arc
