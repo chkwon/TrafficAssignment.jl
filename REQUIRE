@@ -1,3 +1,3 @@
-v"0.4" <= VERSION < v"0.5-" #To get only stable 0.4 versions
+julia v0.4
 LightGraphs
 Optim
