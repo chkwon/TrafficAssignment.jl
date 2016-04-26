@@ -85,7 +85,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         # value = free_flow_time .* ( x + B.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
         # return sum(value)
 
-        sum = 0
+        sum = 0.0
         for i=1:length(x)
             sum += free_flow_time[i] * ( x[i] + B[i]* ( x[i]^(power[i]+1)) / (capacity[i]^power[i]) / (power[i]+1))
             sum += toll_factor *toll[i] + distance_factor * link_length[i]
@@ -128,12 +128,8 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     end
 
 
-    spp_total = 0
-    vvv_total = 0
-
     function all_or_nothing_single(travel_time)
-        state = []
-        path = []
+        state = LightGraphs.DijkstraState{Float64}
         x = zeros(size(start_node))
 
         for r=1:size(travel_demand)[1]
@@ -146,15 +142,13 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
                 x = x + travel_demand[r,s] * get_vector(state, r, s, link_dic)
             end
         end
-
         return x
     end
 
 
-    # # parallel computing version
+    # parallel computing version
     function all_or_nothing_parallel(travel_time)
-        state = []
-        path = []
+        state = LightGraphs.DijkstraState{Float64}
         vv = zeros(size(start_node))
         x = zeros(size(start_node))
 
@@ -212,43 +206,43 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
     # Initializing variables
     xk = x0
-    tauk = 0
+    tauk = 0.0
     yk_FW = x0
     sk_CFW = yk_FW
-    Hk_diag = []
+    Hk_diag = Array{Float64,1}
 
-    dk_FW = []
-    dk_bar = []
-    dk_CFW = []
-    dk = []
+    dk_FW = Array{Float64,1}
+    dk_bar = Array{Float64,1}
+    dk_CFW = Array{Float64,1}
+    dk = Array{Float64,1}
 
-    alphak = 0
-    Nk = 0
-    Dk = 0
+    alphak = 0.0
+    Nk = 0.0
+    Dk = 0.0
 
-    tauk = 0
+    tauk = 0.0
     is_first_iteration = false
     is_second_iteration = false
 
     sk_BFW = yk_FW
     sk_BFW_old = yk_FW
 
-    dk_bbar = []
-    muk = []
-    nuk = []
-    beta0 = 0
-    beta1 = 0
-    beat2 = 0
+    dk_bbar = Array{Float64,1}
+    muk = Array{Float64,1}
+    nuk = Array{Float64,1}
+    beta0 = 0.0
+    beta1 = 0.0
+    beta2 = 0.0
 
 
-    function fk(tau)
-        value = objective(xk+tau*dk)
-        return value
-    end
-
-    function lower_bound_k(x, xk)
-        value = objective(xk) + dot( BPR(xk), ( x - xk) )
-    end
+    # function fk(tau)
+    #     value = objective(xk+tau*dk)
+    #     return value
+    # end
+    #
+    # function lower_bound_k(x, xk)
+    #     value = objective(xk) + dot( BPR(xk), ( x - xk) )
+    # end
 
 
     for k=1:max_iter_no
@@ -275,7 +269,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
                 Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
 
                 delta = 0.0001 # What value should I use?
-                alphak = 0
+                # alphak = 0
                 if Dk !=0 && 0 <= Nk/Dk <= 1-delta
                     alphak = Nk/Dk
                 elseif Dk !=0 && Nk/Dk > 1-delta
@@ -311,7 +305,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
                 Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
 
                 delta = 0.0001 # What value should I use?
-                alphak = 0
+                # alphak = 0
                 if Dk !=0 && 0 <= Nk/Dk <= 1-delta
                     alphak = Nk/Dk
                 elseif Dk !=0 && Nk/Dk > 1-delta
@@ -365,20 +359,20 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
         if step==:exact
             # Line Search from xk in the direction dk
-            optk = optimize(fk, 0.0, 1.0, method = :golden_section)
+            optk = optimize(tau -> objective(xk+tau*dk), 0.0, 1.0, method = :golden_section)
             tauk = optk.minimum
         elseif step==:newton
             # Newton step
             tauk = - dot( gradient(xk), dk ) / dot( dk, Hk_diag.*dk )
             tauk = max(0, min(1, tauk))
-            @assert 0<= tauk <= 1
         end
 
 
         # Average Excess Cost
         average_excess_cost = ( dot(xk, travel_time) - dot(yk_FW, travel_time) ) / sum(travel_demand)
         if log==:on
-            println("k=$k,\ttauk=$tauk,\tobjective=$(objective(xk)),\taec=$average_excess_cost")
+            # println("k=$k,\ttauk=$tauk,\tobjective=$(objective(xk)),\taec=$average_excess_cost")
+            @printf("k=%4d, tauk=%15.10f, objective=%15f, aec=%15.10f\n", k, tauk, objective(xk), average_excess_cost)
         end
 
         # rel_gap = ( objective(xk) - best_objective ) / best_objective

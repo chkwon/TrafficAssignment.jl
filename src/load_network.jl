@@ -6,28 +6,28 @@
 
 # Traffic Assignment Data structure
 type TA_Data
-    network_name::AbstractString
+    network_name::ASCIIString
 
     number_of_zones::Int64
     number_of_nodes::Int64
     first_thru_node::Int64
     number_of_links::Int64
 
-    start_node::Array
-    end_node::Array
-    capacity::Array
-    link_length::Array
-    free_flow_time::Array
-    B::Array
-    power::Array
-    speed_limit::Array
-    toll::Array
-    link_type::Array
+    start_node::Array{Int64,1}
+    end_node::Array{Int64,1}
+    capacity::Array{Float64,1}
+    link_length::Array{Float64,1}
+    free_flow_time::Array{Float64,1}
+    B::Array{Float64,1}
+    power::Array{Float64,1}
+    speed_limit::Array{Float64,1}
+    toll::Array{Float64,1}
+    link_type::Array{Int64,1}
 
     total_od_flow::Float64
 
-    travel_demand::Array
-    od_pairs::Array
+    travel_demand::Array{Float64,2}
+    od_pairs::Array{Tuple{Int64,Int64},1}
 
     toll_factor::Float64
     distance_factor::Float64
@@ -37,8 +37,8 @@ end
 
 function load_ta_network(network_name="Sioux Falls")
 
-    toll_factor = 0
-    distance_factor = 0
+    toll_factor = 0.0
+    distance_factor = 0.0
 
     if network_name == "Sioux Falls"
         network_data_file = "SiouxFalls_net.txt"
@@ -47,21 +47,21 @@ function load_ta_network(network_name="Sioux Falls")
     elseif network_name == "Barcelona"
         network_data_file = "Barcelona_net.txt"
         trip_table_file = "Barcelona_trips.txt"
-        best_objective = 1
+        best_objective = 1.0
     elseif network_name =="Chicago Sketch"
         network_data_file = "ChicagoSketch_net.txt"
         trip_table_file = "ChicagoSketch_trips.txt"
-        best_objective = 1
+        best_objective = 1.0
         toll_factor = 0.02
         distance_factor = 0.04
     elseif network_name == "Anaheim"
         network_data_file = "Anaheim_net.txt"
         trip_table_file = "Anaheim_trips.txt"
-        best_objective = 1
+        best_objective = 1.0
     elseif network_name == "Winnipeg"
         network_data_file = "Winnipeg_net.txt"
         trip_table_file = "Winnipeg_trips.txt"
-        best_objective = 1
+        best_objective = 1.0
     end
 
     network_data_file = joinpath(Pkg.dir("TrafficAssignment"), "data", network_data_file)
