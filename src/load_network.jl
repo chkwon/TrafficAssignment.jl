@@ -64,8 +64,8 @@ function load_ta_network(network_name="Sioux Falls")
         best_objective = 1.0
     end
 
-    network_data_file = joinpath(Pkg.dir("TrafficAssignment"), "data", network_data_file)
-    trip_table_file = joinpath(Pkg.dir("TrafficAssignment"), "data", trip_table_file)
+    network_data_file = joinpath(dirname(@__FILE__), "..", "data", network_data_file)
+    trip_table_file = joinpath(dirname(@__FILE__), "..", "data", trip_table_file)
 
 
 
