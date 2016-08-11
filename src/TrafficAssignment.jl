@@ -10,7 +10,8 @@ include("frank_wolfe.jl")
 
 export
         load_ta_network,
-        ta_frank_wolfe
+        ta_frank_wolfe,
+        TA_Data
 
 
 
