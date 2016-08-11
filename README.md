@@ -97,6 +97,10 @@ ta_data = load_ta_network("Sioux Falls")
 link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
 ```
 
+The total system travel time can be simply computed as
+```julia
+system_travel_time = dot(link_travel_time, link_flow)
+```
 
 # Parallel Computing
 
