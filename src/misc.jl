@@ -34,12 +34,16 @@ function get_vector(state, origin, destination, link_dic)
     parent = -1
     x = zeros(Int, maximum(link_dic))
 
-    while parent != origin && origin != destination
+    while parent != origin && origin != destination && current != 0
         parent = state.parents[current]
 
-        link_idx = link_dic[parent,current]
-        if link_idx != 0
-            x[link_idx] = 1
+        # println("origin=$origin, destination=$destination, parent=$parent, current=$current")
+
+        if parent != 0
+            link_idx = link_dic[parent,current]
+            if link_idx != 0
+                x[link_idx] = 1
+            end
         end
 
         current = parent
