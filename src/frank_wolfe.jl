@@ -76,7 +76,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         bpr = similar(x)
         for i=1:length(bpr)
             bpr[i] = free_flow_time[i] * ( 1.0 + B[i] * (x[i]/capacity[i])^power[i] )
-            bpr[i] += toll_factor *toll[i] + distance_factor * link_length[i]
+            bpr[i] += toll_factor * toll[i] + distance_factor * link_length[i]
         end
         return bpr
     end
