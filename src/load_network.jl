@@ -6,7 +6,7 @@
 
 # Traffic Assignment Data structure
 type TA_Data
-    network_name::ASCIIString
+    network_name::String
 
     number_of_zones::Int64
     number_of_nodes::Int64
