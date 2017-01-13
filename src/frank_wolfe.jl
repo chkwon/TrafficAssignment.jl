@@ -360,7 +360,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         if step==:exact
             # Line Search from xk in the direction dk
             optk = optimize(tau -> objective(xk+tau*dk), 0.0, 1.0, GoldenSection())
-            tauk = optk.minimum
+            tauk = optk.minimizer
         elseif step==:newton
             # Newton step
             tauk = - dot( gradient(xk), dk ) / dot( dk, Hk_diag.*dk )
