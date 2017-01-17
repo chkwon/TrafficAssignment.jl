@@ -1,7 +1,5 @@
 # TrafficAssignment.jl
 
-[![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.3.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
-[![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.4.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
 [![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.5.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
 
 [![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
