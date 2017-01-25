@@ -8,13 +8,13 @@
 type TA_Data
     network_name::String
 
-    number_of_zones::Int64
-    number_of_nodes::Int64
-    first_thru_node::Int64
-    number_of_links::Int64
+    number_of_zones::Int
+    number_of_nodes::Int
+    first_thru_node::Int
+    number_of_links::Int
 
-    start_node::Array{Int64,1}
-    end_node::Array{Int64,1}
+    start_node::Array{Int,1}
+    end_node::Array{Int,1}
     capacity::Array{Float64,1}
     link_length::Array{Float64,1}
     free_flow_time::Array{Float64,1}
