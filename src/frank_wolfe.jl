@@ -55,7 +55,12 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
     # preparing a graph
     graph = create_graph(start_node, end_node)
-    link_dic = sparse(start_node, end_node, 1:number_of_links)
+    @show size(start_node)
+    @show size(end_node)
+    @show size(collect(1:number_of_links))
+
+
+    link_dic = sparse(start_node, end_node, collect(1:number_of_links))
 
     setup_time = time() - setup_time
 
