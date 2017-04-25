@@ -84,13 +84,13 @@ function load_ta_network(network_name="Sioux Falls")
 
     while (line=readline(n)) != ""
         if contains(line, "<NUMBER OF ZONES>")
-            number_of_zones = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_zones = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<NUMBER OF NODES>")
-            number_of_nodes = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_nodes = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<FIRST THRU NODE>")
-            first_thru_node = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            first_thru_node = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<NUMBER OF LINKS>")
-            number_of_links = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_links = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<END OF METADATA>")
             break
         end
@@ -98,8 +98,8 @@ function load_ta_network(network_name="Sioux Falls")
 
     @assert number_of_links > 0
 
-    start_node = Array(Int, number_of_links)
-    end_node = Array(Int, number_of_links)
+    start_node = Array{Int64}(number_of_links)
+    end_node = Array{Int64}(number_of_links)
     capacity = zeros(number_of_links)
     link_length = zeros(number_of_links)
     free_flow_time = zeros(number_of_links)
@@ -107,11 +107,12 @@ function load_ta_network(network_name="Sioux Falls")
     power = zeros(number_of_links)
     speed_limit = zeros(number_of_links)
     toll = zeros(number_of_links)
-    link_type = Array(Int, number_of_links)
+    link_type = Array{Int64}(number_of_links)
 
     idx = 1
-    while (line=readline(n)) != ""
-        if contains(line, "~")
+    while !eof(n)
+      line = readline(n)
+        if contains(line, "~") || line == ""
             continue
         end
 
@@ -120,9 +121,8 @@ function load_ta_network(network_name="Sioux Falls")
             line = strip(line, ';')
 
             numbers = split(line)
-
-            start_node[idx] = parse(Int, numbers[1])
-            end_node[idx] = parse(Int, numbers[2])
+            start_node[idx] = parse(Int64, numbers[1])
+            end_node[idx] = parse(Int64, numbers[2])
             capacity[idx] = parse(Float64, numbers[3])
             link_length[idx] = parse(Float64, numbers[4])
             free_flow_time[idx] = parse(Float64, numbers[5])
@@ -130,7 +130,7 @@ function load_ta_network(network_name="Sioux Falls")
             power[idx] = parse(Float64, numbers[7])
             speed_limit[idx] = parse(Float64, numbers[8])
             toll[idx] = parse(Float64, numbers[9])
-            link_type[idx] = parse(Int, numbers[10])
+            link_type[idx] = parse(Int64, numbers[10])
 
             idx = idx + 1
         end
@@ -147,9 +147,9 @@ function load_ta_network(network_name="Sioux Falls")
 
     while (line=readline(f)) != ""
         if contains(line, "<NUMBER OF ZONES>")
-            number_of_zones_trip = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_zones_trip = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<TOTAL OD FLOW>")
-            total_od_flow = parse(Float64, line[ search(line, '>')+1 : end-1 ] )
+            total_od_flow = parse(Float64, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<END OF METADATA>")
             break
         end
@@ -160,15 +160,20 @@ function load_ta_network(network_name="Sioux Falls")
 
     travel_demand = zeros(number_of_zones, number_of_zones)
     od_pairs = Array{Tuple{Int64, Int64}}(0)
-    while (line=readline(f)) != ""
-        if contains(line, "Origin")
+
+    while !eof(f)
+        line = readline(f)
+
+        if line == ""
+            continue
+        elseif contains(line, "Origin")
             origin = parse(Int, split(line)[2] )
         elseif contains(line, ";")
             pairs = split(line, ";")
             for i=1:size(pairs)[1]
                 if contains(pairs[i], ":")
                     pair = split(pairs[i], ":")
-                    destination = parse(Int, strip(pair[1]) )
+                    destination = parse(Int64, strip(pair[1]) )
                     od_flow = parse(Float64, strip(pair[2]) )
                     travel_demand[origin, destination] = od_flow
                     push!(od_pairs, (origin, destination))

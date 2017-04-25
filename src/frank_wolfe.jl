@@ -55,7 +55,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
     # preparing a graph
     graph = create_graph(start_node, end_node)
-    link_dic = sparse(start_node, end_node, 1:number_of_links)
+    link_dic = sparse(start_node, end_node, collect(1:number_of_links))
 
     setup_time = time() - setup_time
 
@@ -113,7 +113,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     end
 
     function hessian_diag(x)
-        h_diag = Array(Float64, size(x))
+        h_diag = Array{Float64}(size(x))
         for i=1:length(x)
             if power[i] >= 1.0
                 h_diag[i] = free_flow_time[i] * B[i] * power[i] * (x[i]^(power[i]-1)) / (capacity[i]^power[i])
