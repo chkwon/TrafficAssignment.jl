@@ -84,13 +84,13 @@ function load_ta_network(network_name="Sioux Falls")
 
     while (line=readline(n)) != ""
         if contains(line, "<NUMBER OF ZONES>")
-            number_of_zones = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_zones = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<NUMBER OF NODES>")
-            number_of_nodes = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_nodes = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<FIRST THRU NODE>")
-            first_thru_node = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            first_thru_node = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<NUMBER OF LINKS>")
-            number_of_links = parse(Int, line[ search(line, '>')+1 : end-1 ] )
+            number_of_links = parse(Int, line[ search(line, '>')+1 : end ] )
         elseif contains(line, "<END OF METADATA>")
             break
         end
@@ -110,8 +110,9 @@ function load_ta_network(network_name="Sioux Falls")
     link_type = Array{Int64}(number_of_links)
 
     idx = 1
-    while (line=readline(n)) != ""
-        if contains(line, "~")
+    while !eof(n)
+      line = readline(n)
+        if contains(line, "~") || line == ""
             continue
         end
 
@@ -120,7 +121,6 @@ function load_ta_network(network_name="Sioux Falls")
             line = strip(line, ';')
 
             numbers = split(line)
-
             start_node[idx] = parse(Int64, numbers[1])
             end_node[idx] = parse(Int64, numbers[2])
             capacity[idx] = parse(Float64, numbers[3])
@@ -160,8 +160,13 @@ function load_ta_network(network_name="Sioux Falls")
 
     travel_demand = zeros(number_of_zones, number_of_zones)
     od_pairs = Array{Tuple{Int64, Int64}}(0)
-    while (line=readline(f)) != ""
-        if contains(line, "Origin")
+
+    while !eof(f)
+        line = readline(f)
+
+        if line == ""
+            continue
+        elseif contains(line, "Origin")
             origin = parse(Int, split(line)[2] )
         elseif contains(line, ";")
             pairs = split(line, ";")
