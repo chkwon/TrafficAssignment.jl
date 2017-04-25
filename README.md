@@ -1,6 +1,8 @@
 # TrafficAssignment.jl
 
+[![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.4.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
 [![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.5.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
+[![TrafficAssignment](http://pkg.julialang.org/badges/TrafficAssignment_0.6.svg)](http://pkg.julialang.org/?pkg=TrafficAssignment)
 
 [![Build Status](https://travis-ci.org/chkwon/TrafficAssignment.jl.svg?branch=master)](https://travis-ci.org/chkwon/TrafficAssignment.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/8729wrjsv2rjga34?svg=true)](https://ci.appveyor.com/project/chkwon/trafficassignment-jl)
@@ -40,28 +42,28 @@ ta_data = load_ta_network("Sioux Falls")
 The return value is of the TA_Data type, which is defined as
 ```julia
 type TA_Data
-    network_name::AbstractString
+    network_name::String
 
-    number_of_zones::Int64
-    number_of_nodes::Int64
-    first_thru_node::Int64
-    number_of_links::Int64
+    number_of_zones::Int
+    number_of_nodes::Int
+    first_thru_node::Int
+    number_of_links::Int
 
-    start_node::Array
-    end_node::Array
-    capacity::Array
-    link_length::Array
-    free_flow_time::Array
-    B::Array
-    power::Array
-    speed_limit::Array
-    toll::Array
-    link_type::Array
+    start_node::Array{Int,1}
+    end_node::Array{Int,1}
+    capacity::Array{Float64,1}
+    link_length::Array{Float64,1}
+    free_flow_time::Array{Float64,1}
+    B::Array{Float64,1}
+    power::Array{Float64,1}
+    speed_limit::Array{Float64,1}
+    toll::Array{Float64,1}
+    link_type::Array{Int64,1}
 
     total_od_flow::Float64
 
-    travel_demand::Array
-    od_pairs::Array
+    travel_demand::Array{Float64,2}
+    od_pairs::Array{Tuple{Int64,Int64},1}
 
     toll_factor::Float64
     distance_factor::Float64
