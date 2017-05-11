@@ -35,40 +35,70 @@ type TA_Data
     best_objective::Float64
 end
 
-function load_ta_network(network_name="Sioux Falls")
 
-    toll_factor = 0.0
-    distance_factor = 0.0
+function download_tntp(force_download=false)
+  ta_root_dir = joinpath(dirname(dirname(@__FILE__)))
+  dest = ta_root_dir
+  data_dir = joinpath(dest, "TransportationNetworks-master")
 
-    if network_name == "Sioux Falls"
-        network_data_file = "SiouxFalls_net.txt"
-        trip_table_file = "SiouxFalls_trips.txt"
-        best_objective = 4.231335287107440e6 #42.31335287107440
-    elseif network_name == "Barcelona"
-        network_data_file = "Barcelona_net.txt"
-        trip_table_file = "Barcelona_trips.txt"
-        best_objective = 1.0
-    elseif network_name =="Chicago Sketch"
-        network_data_file = "ChicagoSketch_net.txt"
-        trip_table_file = "ChicagoSketch_trips.txt"
-        best_objective = 1.0
-        toll_factor = 0.02
-        distance_factor = 0.04
-    elseif network_name == "Anaheim"
-        network_data_file = "Anaheim_net.txt"
-        trip_table_file = "Anaheim_trips.txt"
-        best_objective = 1.0
-    elseif network_name == "Winnipeg"
-        network_data_file = "Winnipeg_net.txt"
-        trip_table_file = "Winnipeg_trips.txt"
-        best_objective = 1.0
+
+  # Download
+  if !isdir(data_dir) || force_download
+    if isdir(data_dir)
+      rm(data_dir)
     end
+    file = joinpath(ta_root_dir, "tntp.zip")
+    dl = download("https://github.com/bstabler/TransportationNetworks/archive/master.zip", file)
+    run(unpack_cmd(file, dest, ".zip", ""))
+    rm(file)
+  end
 
-    network_data_file = joinpath(dirname(@__FILE__), "..", "data", network_data_file)
-    trip_table_file = joinpath(dirname(@__FILE__), "..", "data", trip_table_file)
+  return data_dir
+end
+
+function read_ta_network(network_name)
+  tntp_dir = download_tntp()
+  network_dir = joinpath(tntp_dir, network_name)
+
+  @assert ispath(network_dir)
+
+  network_data_file = ""
+  trip_table_file = ""
+
+  for f in readdir(network_dir)
+    if contains(lowercase(f), ".zip")
+      zipfile = joinpath(network_dir, f)
+      run(unpack_cmd(zipfile, network_dir, ".zip", ""))
+      rm(zipfile)
+    end
+  end
+
+  for f in readdir(network_dir)
+    if contains(lowercase(f), "_net") && contains(lowercase(f), ".tntp")
+      network_data_file = joinpath(network_dir, f)
+    elseif contains(lowercase(f), "_trips") && contains(lowercase(f), ".tntp")
+      trip_table_file = joinpath(network_dir, f)
+    end
+  end
+
+  @assert network_data_file != ""
+  @assert trip_table_file != ""
+
+  return network_data_file, trip_table_file
+end
 
 
+function load_ta_network(network_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0)
+  network_data_file, trip_table_file = read_ta_network(network_name)
 
+  return load_ta_network(network_name, network_data_file, trip_table_file, best_objective=best_objective, toll_factor=toll_factor, distance_factor=distance_factor)
+end
+
+
+function load_ta_network(network_name, network_data_file, trip_table_file; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0)
+
+    @assert ispath(network_data_file)
+    @assert ispath(trip_table_file)
 
     ##################################################
     # Network Data
