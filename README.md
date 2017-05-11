@@ -28,14 +28,13 @@ julia> Pkg.test("TrafficAssignment")
 
 # load_ta_network
 
-This function loads a network data available in Hillel Bar-Gera's [Transportation Network Test Problems](http://www.bgu.ac.il/~bargera/tntp/)---it is now updated in [this github repository](https://github.com/bstabler/TransportationNetworks).
+This function loads a network data available in [this TNTP github repository](https://github.com/bstabler/TransportationNetworks). The network name must match with the directory name in the TNTP repository.
 
 Example:
 ```julia
-ta_data = load_ta_network("Sioux Falls")
+ta_data = load_ta_network("SiouxFalls")
 # ta_data = load_ta_network("Anaheim")
 # ta_data = load_ta_network("Barcelona")
-# ta_data = load_ta_network("Chicago Sketch")
 # ta_data = load_ta_network("Winnipeg")
 ```
 
@@ -93,7 +92,7 @@ Available optional arguments:
 
 For example, one may do:
 ```julia
-ta_data = load_ta_network("Sioux Falls")
+ta_data = load_ta_network("SiouxFalls")
 link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
 ```
 
