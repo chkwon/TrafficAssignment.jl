@@ -1,17 +1,26 @@
 using TrafficAssignment
 using Base.Test
 
+function test_tntp()
+  data_dir = download_tntp()
 
-# ta_data = load_ta_network("Anaheim")
-# ta_data = load_ta_network("Barcelona")
-# ta_data = load_ta_network("Chicago Sketch")
-# ta_data = load_ta_network("Winnipeg")
+  # Test
+  for d in readdir(data_dir)
+    if isdir(joinpath(data_dir, d))
+      try
+        read_ta_network(d)
+        info("Network '$d' is OK.")
+      catch e
+        warn("Network '$d' is not usable.")
+      end
+    end
+  end
+end
 
-
-
+test_tntp()
 
 data_time = time()
-ta_data = load_ta_network("Sioux Falls")
+ta_data = load_ta_network("SiouxFalls")
 
 println("Data Loading Completed, time:", time() - data_time, " seconds")
 
