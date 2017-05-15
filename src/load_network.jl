@@ -39,7 +39,7 @@ end
 function download_tntp(force_download=false)
   ta_root_dir = joinpath(dirname(dirname(@__FILE__)))
   dest = ta_root_dir
-  data_dir = joinpath(dest, "TransportationNetworks-master")
+  data_dir = joinpath(dest, "TransportationNetworks-$(TNTP_SHA)")
 
 
   # Download
@@ -48,7 +48,7 @@ function download_tntp(force_download=false)
       rm(data_dir)
     end
     file = joinpath(ta_root_dir, "tntp.zip")
-    dl = download("https://github.com/bstabler/TransportationNetworks/archive/master.zip", file)
+    dl = download("https://github.com/bstabler/TransportationNetworks/archive/$(TNTP_SHA).zip", file)
     run(unpack_cmd(file, dest, ".zip", ""))
     rm(file)
   end
