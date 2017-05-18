@@ -51,8 +51,23 @@ function get_vector(state, origin, destination, link_dic)
     return x
 end
 
+function add_demand_vector!(x, demand, state, origin, destination, link_dic)
+  current = destination
+  parent = -1
 
+  while parent != origin && origin != destination && current != 0
+      parent = state.parents[current]
 
+      if parent != 0
+          link_idx = link_dic[parent,current]
+          if link_idx != 0
+              x[link_idx] += demand
+          end
+      end
+
+      current = parent
+  end
+end
 
 
 
