@@ -88,6 +88,7 @@ function read_ta_network(network_name)
 end
 
 
+
 function load_ta_network(network_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0)
   network_data_file, trip_table_file = read_ta_network(network_name)
 
@@ -147,8 +148,7 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
         end
 
         if contains(line, ";")
-            line = strip(line, '\n')
-            line = strip(line, ';')
+            line = strip(line, [' ', '\n', ';'])
 
             numbers = split(line)
             start_node[idx] = parse(Int64, numbers[1])
@@ -160,7 +160,7 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
             power[idx] = parse(Float64, numbers[7])
             speed_limit[idx] = parse(Float64, numbers[8])
             toll[idx] = parse(Float64, numbers[9])
-            link_type[idx] = parse(Int64, numbers[10])
+            link_type[idx] = Int(round(parse(Float64, numbers[10])))
 
             idx = idx + 1
         end
