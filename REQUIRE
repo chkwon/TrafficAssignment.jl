@@ -1,7 +1,7 @@
 julia 0.7
 LightGraphs 0.8
 Optim 0.7
-BinDeps
+BinDeps 0.8
 Distributed
 Printf
 LinearAlgebra
