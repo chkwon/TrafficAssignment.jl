@@ -5,7 +5,7 @@
 #Link generalized cost = Link travel time + toll_factor * toll + distance_factor * distance
 
 # Traffic Assignment Data structure
-type TA_Data
+mutable struct TA_Data
     network_name::String
 
     number_of_zones::Int
@@ -34,6 +34,9 @@ type TA_Data
 
     best_objective::Float64
 end
+
+
+search_sc(s,c) = something(findfirst(isequal(c), s), 0)
 
 
 function download_tntp(force_download=false)
@@ -66,7 +69,7 @@ function read_ta_network(network_name)
   trip_table_file = ""
 
   for f in readdir(network_dir)
-    if contains(lowercase(f), ".zip")
+    if occursin(".zip", lowercase(f))
       zipfile = joinpath(network_dir, f)
       run(unpack_cmd(zipfile, network_dir, ".zip", ""))
       rm(zipfile)
@@ -74,9 +77,9 @@ function read_ta_network(network_name)
   end
 
   for f in readdir(network_dir)
-    if contains(lowercase(f), "_net") && contains(lowercase(f), ".tntp")
+    if occursin("_net", lowercase(f)) && occursin(".tntp", lowercase(f))
       network_data_file = joinpath(network_dir, f)
-    elseif contains(lowercase(f), "_trips") && contains(lowercase(f), ".tntp")
+  elseif occursin("_trips", lowercase(f)) && occursin(".tntp", lowercase(f))
       trip_table_file = joinpath(network_dir, f)
     end
   end
@@ -92,7 +95,7 @@ end
 function load_ta_network(network_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0)
   network_data_file, trip_table_file = read_ta_network(network_name)
 
-  return load_ta_network(network_name, network_data_file, trip_table_file, best_objective=best_objective, toll_factor=toll_factor, distance_factor=distance_factor)
+  load_ta_network(network_name, network_data_file, trip_table_file, best_objective=best_objective, toll_factor=toll_factor, distance_factor=distance_factor)
 end
 
 
@@ -114,23 +117,23 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
     n = open(network_data_file, "r")
 
     while (line=readline(n)) != ""
-        if contains(line, "<NUMBER OF ZONES>")
-            number_of_zones = parse(Int, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<NUMBER OF NODES>")
-            number_of_nodes = parse(Int, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<FIRST THRU NODE>")
-            first_thru_node = parse(Int, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<NUMBER OF LINKS>")
-            number_of_links = parse(Int, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<END OF METADATA>")
+        if occursin("<NUMBER OF ZONES>", line)
+            number_of_zones = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<NUMBER OF NODES>", line)
+            number_of_nodes = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<FIRST THRU NODE>", line)
+            first_thru_node = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<NUMBER OF LINKS>", line)
+            number_of_links = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<END OF METADATA>", line)
             break
         end
     end
 
     @assert number_of_links > 0
 
-    start_node = Array{Int64}(number_of_links)
-    end_node = Array{Int64}(number_of_links)
+    start_node = Array{Int64}(undef, number_of_links)
+    end_node = Array{Int64}(undef, number_of_links)
     capacity = zeros(number_of_links)
     link_length = zeros(number_of_links)
     free_flow_time = zeros(number_of_links)
@@ -138,16 +141,16 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
     power = zeros(number_of_links)
     speed_limit = zeros(number_of_links)
     toll = zeros(number_of_links)
-    link_type = Array{Int64}(number_of_links)
+    link_type = Array{Int64}(undef, number_of_links)
 
     idx = 1
     while !eof(n)
       line = readline(n)
-        if contains(line, "~") || line == ""
+        if occursin("~", line) || line == ""
             continue
         end
 
-        if contains(line, ";")
+        if occursin(";", line)
             line = strip(line, [' ', '\n', ';'])
 
             numbers = split(line)
@@ -176,11 +179,11 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
     f = open(trip_table_file, "r")
 
     while (line=readline(f)) != ""
-        if contains(line, "<NUMBER OF ZONES>")
-            number_of_zones_trip = parse(Int, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<TOTAL OD FLOW>")
-            total_od_flow = parse(Float64, line[ search(line, '>')+1 : end ] )
-        elseif contains(line, "<END OF METADATA>")
+        if occursin("<NUMBER OF ZONES>", line)
+            number_of_zones_trip = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<TOTAL OD FLOW>", line)
+            total_od_flow = parse(Float64, line[ search_sc(line, '>')+1 : end ] )
+        elseif occursin("<END OF METADATA>", line)
             break
         end
     end
@@ -189,25 +192,30 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
     @assert total_od_flow > 0
 
     travel_demand = zeros(number_of_zones, number_of_zones)
-    od_pairs = Array{Tuple{Int64, Int64}}(0)
+    od_pairs = Array{Tuple{Int64, Int64}}(undef, 0)
+
+    origin = -1
 
     while !eof(f)
         line = readline(f)
 
         if line == ""
+            origin = -1
             continue
-        elseif contains(line, "Origin")
+        elseif occursin("Origin", line)
             origin = parse(Int, split(line)[2] )
-        elseif contains(line, ";")
+        elseif occursin(";", line)
             pairs = split(line, ";")
             for i=1:size(pairs)[1]
-                if contains(pairs[i], ":")
+                if occursin(":", pairs[i])
                     pair = split(pairs[i], ":")
                     destination = parse(Int64, strip(pair[1]) )
                     od_flow = parse(Float64, strip(pair[2]) )
+
+                    # println("origin=$origin, destination=$destination, flow=$od_flow")
+
                     travel_demand[origin, destination] = od_flow
                     push!(od_pairs, (origin, destination))
-                    # println("origin=$origin, destination=$destination, flow=$od_flow")
                 end
             end
         end

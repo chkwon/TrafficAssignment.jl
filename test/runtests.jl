@@ -1,5 +1,5 @@
 using TrafficAssignment
-using Base.Test
+using Test
 
 include("test_functions.jl")
 
