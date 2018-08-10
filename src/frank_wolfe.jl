@@ -113,7 +113,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     end
 
     function hessian_diag(x)
-        h_diag = Array{Float64}(size(x))
+        h_diag = Array{Float64}(undef, size(x))
         for i=1:length(x)
             if power[i] >= 1.0
                 h_diag[i] = free_flow_time[i] * B[i] * power[i] * (x[i]^(power[i]-1)) / (capacity[i]^power[i])
@@ -153,7 +153,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
         vv = zeros(size(start_node))
         x = zeros(size(start_node))
 
-        x = x + @parallel (+) for r=1:size(travel_demand)[1]
+        x = x + @distributed (+) for r=1:size(travel_demand)[1]
             # for each origin node r, find shortest paths to all destination nodes
             # if there is any travel demand starting from node r.
             vv = zeros(size(start_node))
@@ -186,7 +186,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
             all_or_nothing_parallel(travel_time)
         else
             all_or_nothing_single(travel_time)
-            # when nprocs()==1, using @parallel just adds unnecessary setup time. I guess.
+            # when nprocs()==1, using @distributed just adds unnecessary setup time. I guess.
         end
     end
 

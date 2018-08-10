@@ -8,9 +8,10 @@ function test_tntp()
       try
         read_ta_network(d)
         load_ta_network(d)
-        info("Network '$d' is OK.")
+        @info "Network '$d' is OK."
       catch e
-        warn("Network '$d' is not usable.")
+        @show e
+        @warn "Network '$d' is not usable."
       end
     end
   end
@@ -76,16 +77,18 @@ function read_ta_summary(network_data_file)
 
   n = open(network_data_file, "r")
 
+  search_sc(s,c) = something(findfirst(isequal(c), s), 0)
+
   while (line=readline(n)) != ""
-      if contains(line, "<NUMBER OF ZONES>")
-          number_of_zones = parse(Int, line[ search(line, '>')+1 : end ] )
-      elseif contains(line, "<NUMBER OF NODES>")
-          number_of_nodes = parse(Int, line[ search(line, '>')+1 : end ] )
-      elseif contains(line, "<FIRST THRU NODE>")
-          first_thru_node = parse(Int, line[ search(line, '>')+1 : end ] )
-      elseif contains(line, "<NUMBER OF LINKS>")
-          number_of_links = parse(Int, line[ search(line, '>')+1 : end ] )
-      elseif contains(line, "<END OF METADATA>")
+      if occursin("<NUMBER OF ZONES>", line)
+          number_of_zones = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<NUMBER OF NODES>", line)
+          number_of_nodes = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<FIRST THRU NODE>", line)
+          first_thru_node = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<NUMBER OF LINKS>", line)
+          number_of_links = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<END OF METADATA>", line)
           break
       end
   end
