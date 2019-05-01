@@ -33,6 +33,7 @@ This function loads a network data available in [this TNTP github repository](ht
 
 Example:
 ```julia
+using TrafficAssignment
 ta_data = load_ta_network("SiouxFalls")
 # ta_data = load_ta_network("Anaheim")
 # ta_data = load_ta_network("Barcelona")
@@ -99,6 +100,7 @@ link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, ma
 
 The total system travel time can be simply computed as
 ```julia
+using LinearAlgebra
 system_travel_time = dot(link_travel_time, link_flow)
 ```
 
