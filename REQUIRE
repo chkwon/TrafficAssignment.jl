@@ -2,3 +2,6 @@ julia 0.7
 LightGraphs 1.0
 Optim 0.16
 BinDeps 0.8
+Complementarity
+JuMP
+Ipopt
