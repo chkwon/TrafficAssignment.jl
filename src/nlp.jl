@@ -1,4 +1,4 @@
-function ta_nlp(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3)
+function ta_system_optimum(ta_data; max_iter_no=2000, log=:off, tol=1e-3, optimizer=Ipopt.Optimizer)
 
     setup_time = time()
 
@@ -118,7 +118,7 @@ function ta_nlp(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, t
     end
 
 
-    m = Model(with_optimizer(Ipopt.Optimizer))
+    m = Model(with_optimizer(Ipopt.Optimizer, print_level=0))
 
     @variable(m, x[a=1:length(links), w=1:length(od_pairs)] >=0 )
     @variable(m, v[a=1:length(links)] >= 0)
@@ -126,25 +126,20 @@ function ta_nlp(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, t
     @constraint(m, vc[a=1:length(links)], v[a] == sum( x[a,ww] for ww=1:length(od_pairs) ))
 
     @constraint(m, c5[i=1:length(nodes), w=1:length(od_pairs)],
-            sum( delta[i,a] * x[a,w] for a=1:length(links) )
-             == q[i,w]
-        )
+      sum( delta[i,a] * x[a,w] for a=1:length(links) ) == q[i,w]
+    )
 
     @NLobjective(m, Min,
-            sum(
-free_flow_time[a] * ( v[a] + B[a]* ( v[a]^(power[a]+1)) / (capacity[a]^power[a]) / (power[a]+1))
-+ toll_factor *toll[a] + distance_factor * link_length[a]
-            for a=1:length(links)
-        )
+      sum( v[a] * (
+          free_flow_time[a] * ( 1 + B[a] * (v[a]/capacity[a])^(power[a]) )
+          + toll_factor *toll[a] + distance_factor * link_length[a]
+        ) for a=1:length(links)
+      )
     )
 
     JuMP.optimize!(m)
 
     vv = JuMP.value.(v)
-
-    @show vv
-    @show BPR(vv)
-    @show objective(vv)
 
     return vv, BPR(vv), JuMP.objective_value(m)
 
