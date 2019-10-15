@@ -1,4 +1,18 @@
 
+function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node, first_thru_node)
+    no_node = nv(graph)
+    no_arc = ne(graph)
+
+    distmx = Inf*ones(no_node, no_node)
+    for i in 1:no_arc
+      if end_node[i] >= first_thru_node
+          distmx[start_node[i], end_node[i]] = travel_time[i]
+      end
+    end
+
+    state = dijkstra_shortest_paths(graph, origin, distmx)
+    return state
+end
 
 function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node)
     no_node = nv(graph)

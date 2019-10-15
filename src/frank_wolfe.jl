@@ -134,7 +134,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
         for r=1:size(travel_demand)[1]
             # for each origin node r, find shortest paths to all destination nodes
-            state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node)
+            state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node, first_thru_node)
 
             for s=1:size(travel_demand)[2]
                 # for each destination node s, find the shortest-path vector
@@ -159,7 +159,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
             vv = zeros(size(start_node))
 
             if sum(travel_demand, 2)[r] > 0.0
-                state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node)
+                state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node, first_thru_node)
 
                 for s=1:size(travel_demand)[2]
                     # for each destination node s, find the shortest-path vector
