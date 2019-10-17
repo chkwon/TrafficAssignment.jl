@@ -91,7 +91,8 @@ Available optional arguments:
 For example, one may do:
 ```julia
 ta_data = load_ta_network("SiouxFalls")
-link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
+link_flow, link_travel_time, objective = 
+ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
 ```
 
 The total system travel time can be simply computed as
