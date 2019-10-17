@@ -38,7 +38,7 @@ ta_data = load_ta_network("SiouxFalls")
 
 The return value is of the TA_Data type, which is defined as
 ```julia
-type TA_Data
+mutable struct TA_Data
     network_name::String
 
     number_of_zones::Int
