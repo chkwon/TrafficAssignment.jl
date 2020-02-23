@@ -28,7 +28,7 @@ println("Data Loading Completed, time:", time() - data_time, " seconds")
     @test abs( objective - 4.963799502172654e6 ) < 1e6
 end
 
-@testset "Sioux Falls" begin
+@testset "Testing Sioux Falls" begin
     ta_data = load_ta_network("SiouxFalls")
     link_volume, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, step=:newton, log=:on, tol=1e-5, max_iter_no=50000)
     solution, header = readdlm("SiouxFalls_flow.csv", ',', header=true)
@@ -37,7 +37,7 @@ end
 end
 
 
-@testset "Anaheim" begin
+@testset "Testing Anaheim" begin
     ta_data = load_ta_network("Anaheim")
     link_volume, link_travel_time, objective = ta_frank_wolfe(ta_data, method=:cfw, step=:newton, log=:on, tol=1e-5, max_iter_no=50000)
     solution, header = readdlm("Anaheim_flow.csv", ',', header=true)
