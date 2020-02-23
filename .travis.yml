@@ -2,19 +2,10 @@
 language: julia
 os:
   - linux
-  - osx
+  # - osx
 julia:
   - 1.0
-  - 1.1
-  - 1.2
-  - 1.3
 notifications:
   email: false
-git:
-  depth: 99999999
-branches:
-  only:
-    - master
-    - /^release-.*$/
 after_success:
-  - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - julia --project -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
