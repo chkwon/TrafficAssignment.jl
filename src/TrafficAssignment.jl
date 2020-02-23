@@ -4,7 +4,7 @@ module TrafficAssignment
 using LightGraphs, Optim, BinDeps
 using Distributed, Printf, LinearAlgebra, SparseArrays
 
-TNTP_SHA = "ca933f74c03af688dfffa33f4b00826cba672479"
+TNTP_SHA = "f730be5e3366e910bb7e9ada4665d32e9cbc219b"
 
 
 include("load_network.jl")

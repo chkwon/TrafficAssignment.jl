@@ -152,6 +152,7 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
 
         if occursin(";", line)
             line = strip(line, [' ', '\n', ';'])
+            line = replace(line, ";" => "")
 
             numbers = split(line)
             start_node[idx] = parse(Int64, numbers[1])
