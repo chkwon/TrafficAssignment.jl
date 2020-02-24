@@ -22,56 +22,6 @@ function test_tntp()
   end
 end
 
-function summarize_ta_data()
-  data_dir = download_tntp()
-
-  # Test
-  dic = Dict()
-  for d in readdir(data_dir)
-    if isdir(joinpath(data_dir, d))
-      try
-        network_data_file, trip_table_file = read_ta_network(d)
-        number_of_zones, number_of_links, number_of_nodes = read_ta_summary(network_data_file)
-        dic[d] = (number_of_zones, number_of_links, number_of_nodes)
-      catch
-
-      end
-
-    end
-  end
-
-  max_len = [0, 0, 0, 0]
-  for net in sort(dic)
-    max_len[1] = max( length(net[1]), max_len[1] )
-    max_len[2] = max( length(digits(net[2][1])), max_len[2] )
-    max_len[3] = max( length(digits(net[2][2])), max_len[3] )
-    max_len[4] = max( length(digits(net[2][3])), max_len[4] )
-  end
-
-  function format(mlen, val)
-    len = 0
-    str = ""
-    if isa(val, String)
-      len = length(val)
-      str = val * " "^(mlen - len + 1 )
-    elseif isa(val, Number)
-      len = length(digits(val))
-      str = " "^(mlen - len + 1) * string(val)
-    end
-    return str
-  end
-
-  println("-"^(17+sum(max_len)))
-  println("| $(format(max_len[1],"Network")) | $(format(max_len[2],"Zones")) | $(format(max_len[3],"Links")) | $(format(max_len[4],"Nodes")) |")
-  println("| $(format(max_len[1],":---")) | $(format(max_len[2],"---:")) | $(format(max_len[3],"---:")) | $(format(max_len[4],"---:")) |")
-  for net in sort(dic)
-    println("| $(format(max_len[1],net[1])) | $(format(max_len[2],net[2][1])) | $(format(max_len[3],net[2][2])) | $(format(max_len[4],net[2][3])) |")
-  end
-  println("-"^(17+sum(max_len)))
-
-  return dic
-end
-
 function read_ta_summary(network_data_file)
   @assert ispath(network_data_file)
 
