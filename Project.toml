@@ -4,9 +4,6 @@ repo = "https://github.com/chkwon/TrafficAssignment.jl.git"
 version = "0.5.2"
 
 [compat]
-BinDeps = "0.8"
-LightGraphs = "1"
-Optim = "0.16"
 julia = "1"
 
 [deps]
