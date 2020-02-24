@@ -1,12 +1,12 @@
 
-function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node, first_thru_node)
+function TA_dijkstra_shortest_paths(graph, travel_time, origin, init_node, term_node, first_thru_node)
     no_node = nv(graph)
     no_arc = ne(graph)
 
     distmx = Inf*ones(no_node, no_node)
     for i in 1:no_arc
-      if end_node[i] >= first_thru_node
-          distmx[start_node[i], end_node[i]] = travel_time[i]
+      if term_node[i] >= first_thru_node
+          distmx[init_node[i], term_node[i]] = travel_time[i]
       end
     end
 
@@ -14,28 +14,28 @@ function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_
     return state
 end
 
-function TA_dijkstra_shortest_paths(graph, travel_time, origin, start_node, end_node)
+function TA_dijkstra_shortest_paths(graph, travel_time, origin, init_node, term_node)
     no_node = nv(graph)
     no_arc = ne(graph)
 
     distmx = Inf*ones(no_node, no_node)
     for i in 1:no_arc
-      distmx[start_node[i], end_node[i]] = travel_time[i]
+      distmx[init_node[i], term_node[i]] = travel_time[i]
     end
 
     state = dijkstra_shortest_paths(graph, origin, distmx)
     return state
 end
 
-function create_graph(start_node, end_node)
-    @assert Base.length(start_node)==Base.length(end_node)
+function create_graph(init_node, term_node)
+    @assert Base.length(init_node)==Base.length(term_node)
 
-    no_node = max(maximum(start_node), maximum(end_node))
-    no_arc = Base.length(start_node)
+    no_node = max(maximum(init_node), maximum(term_node))
+    no_arc = Base.length(init_node)
 
     graph = DiGraph(no_node)
     for i=1:no_arc
-        add_edge!(graph, start_node[i], end_node[i])
+        add_edge!(graph, init_node[i], term_node[i])
     end
     return graph
 end
@@ -88,30 +88,30 @@ end
 
 
 
-# function get_shortest_path(start_node, end_node, link_length, origin, destination)
-#     @assert Base.length(start_node)==Base.length(end_node)
-#     @assert Base.length(start_node)==Base.length(link_length)
+# function get_shortest_path(init_node, term_node, link_length, origin, destination)
+#     @assert Base.length(init_node)==Base.length(term_node)
+#     @assert Base.length(init_node)==Base.length(link_length)
 #
-#     graph = create_graph(start_node, end_node)
+#     graph = create_graph(init_node, term_node)
 #
 #     state = dijkstra_shortest_paths(graph, link_length, origin)
 #
 #     path = get_path(state, origin, destination)
-#     x = get_vector(path, start_node, end_node)
+#     x = get_vector(path, init_node, term_node)
 #
 #     return path, x
 # end
 #
-# function get_vector(state, origin, destination, start_node, end_node)
+# function get_vector(state, origin, destination, init_node, term_node)
 #     current = destination
 #     parent = -1
-#     x = zeros(Int, Base.length(start_node))
+#     x = zeros(Int, Base.length(init_node))
 #
 #     while parent != origin
 #         parent = state.parents[current]
 #
-#         for j=1:Base.length(start_node)
-#             if start_node[j]==parent && end_node[j]==current
+#         for j=1:Base.length(init_node)
+#             if init_node[j]==parent && term_node[j]==current
 #                 x[j] = 1
 #                 break
 #             end

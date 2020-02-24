@@ -1,7 +1,7 @@
 # Sioux Falls network data
 # http://www.bgu.ac.il/~bargera/tntp/
 
-#Link travel time = free flow time * ( 1 + B * (flow/capacity)^Power ).
+#Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
 #Link generalized cost = Link travel time + toll_factor * toll + distance_factor * distance
 
 # Traffic Assignment Data structure
@@ -13,12 +13,12 @@ mutable struct TA_Data
     first_thru_node::Int
     number_of_links::Int
 
-    start_node::Array{Int,1}
-    end_node::Array{Int,1}
+    init_node::Array{Int,1}
+    term_node::Array{Int,1}
     capacity::Array{Float64,1}
     link_length::Array{Float64,1}
     free_flow_time::Array{Float64,1}
-    B::Array{Float64,1}
+    b::Array{Float64,1}
     power::Array{Float64,1}
     speed_limit::Array{Float64,1}
     toll::Array{Float64,1}
@@ -35,6 +35,20 @@ mutable struct TA_Data
     best_objective::Float64
 end
 
+function net_dataframe(td::TA_Data)
+    df = DataFrame()
+    df.init_node = td.init_node
+    df.term_node = td.term_node
+    df.capacity = td.capacity
+    df.link_length = td.link_length
+    df.free_flow_time = td.free_flow_time
+    df.b = td.b
+    df.power = td.power
+    df.speed_limit = td.speed_limit
+    df.toll = td.toll
+    df.link_type = td.link_type
+    return df
+end
 
 search_sc(s,c) = something(findfirst(isequal(c), s), 0)
 
@@ -132,12 +146,12 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
 
     @assert number_of_links > 0
 
-    start_node = Array{Int64}(undef, number_of_links)
-    end_node = Array{Int64}(undef, number_of_links)
+    init_node = Array{Int64}(undef, number_of_links)
+    term_node = Array{Int64}(undef, number_of_links)
     capacity = zeros(number_of_links)
     link_length = zeros(number_of_links)
     free_flow_time = zeros(number_of_links)
-    B = zeros(number_of_links)
+    b = zeros(number_of_links)
     power = zeros(number_of_links)
     speed_limit = zeros(number_of_links)
     toll = zeros(number_of_links)
@@ -155,12 +169,12 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
             line = replace(line, ";" => "")
 
             numbers = split(line)
-            start_node[idx] = parse(Int64, numbers[1])
-            end_node[idx] = parse(Int64, numbers[2])
+            init_node[idx] = parse(Int64, numbers[1])
+            term_node[idx] = parse(Int64, numbers[2])
             capacity[idx] = parse(Float64, numbers[3])
             link_length[idx] = parse(Float64, numbers[4])
             free_flow_time[idx] = parse(Float64, numbers[5])
-            B[idx] = parse(Float64, numbers[6])
+            b[idx] = parse(Float64, numbers[6])
             power[idx] = parse(Float64, numbers[7])
             speed_limit[idx] = parse(Float64, numbers[8])
             toll[idx] = parse(Float64, numbers[9])
@@ -229,12 +243,12 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
         number_of_nodes,
         first_thru_node,
         number_of_links,
-        start_node,
-        end_node,
+        init_node,
+        term_node,
         capacity,
         link_length,
         free_flow_time,
-        B,
+        b,
         power,
         speed_limit,
         toll,
@@ -281,10 +295,12 @@ function read_ta_summary(network_data_file)
 end
 
 
-function summarize_ta_data()
+
+function summarize_ta_data(;markdown=false)
   data_dir = download_tntp()
 
   # Test
+  df = DataFrame(Network = String[], Zones = Int[], Links = Int[], Nodes = Int[])
   dic = Dict()
   for d in readdir(data_dir)
     if isdir(joinpath(data_dir, d))
@@ -292,6 +308,7 @@ function summarize_ta_data()
         network_data_file, trip_table_file = read_ta_network(d)
         number_of_zones, number_of_links, number_of_nodes = read_ta_summary(network_data_file)
         dic[d] = (number_of_zones, number_of_links, number_of_nodes)
+        push!(df, (d, number_of_zones, number_of_links, number_of_nodes))
       catch
 
       end
@@ -320,12 +337,18 @@ function summarize_ta_data()
     return str
   end
 
-  println("-"^(17+sum(max_len)))
-  println("| $(format(max_len[1],"Network")) | $(format(max_len[2],"Zones")) | $(format(max_len[3],"Links")) | $(format(max_len[4],"Nodes")) |")
-  println("| $(format(max_len[1],":---")) | $(format(max_len[2],"---:")) | $(format(max_len[3],"---:")) | $(format(max_len[4],"---:")) |")
-  for net in sort(dic)
-    println("| $(format(max_len[1],net[1])) | $(format(max_len[2],net[2][1])) | $(format(max_len[3],net[2][2])) | $(format(max_len[4],net[2][3])) |")
-  end
-  println("-"^(17+sum(max_len)))
 
+  if markdown
+      println("-"^(17+sum(max_len)))
+      println("| $(format(max_len[1],"Network")) | $(format(max_len[2],"Zones")) | $(format(max_len[3],"Links")) | $(format(max_len[4],"Nodes")) |")
+      println("| $(format(max_len[1],":---")) | $(format(max_len[2],"---:")) | $(format(max_len[3],"---:")) | $(format(max_len[4],"---:")) |")
+      for net in sort(dic)
+        println("| $(format(max_len[1],net[1])) | $(format(max_len[2],net[2][1])) | $(format(max_len[3],net[2][2])) | $(format(max_len[4],net[2][3])) |")
+      end
+      println("-"^(17+sum(max_len)))
+  end
+
+  if !markdown
+      return df
+  end
 end # end of summarize_ta_data

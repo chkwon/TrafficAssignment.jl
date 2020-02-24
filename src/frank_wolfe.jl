@@ -29,13 +29,13 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     first_thru_node = ta_data.first_thru_node
     number_of_links = ta_data.number_of_links
 
-    start_node = ta_data.start_node
-    end_node = ta_data.end_node
+    init_node = ta_data.init_node
+    term_node = ta_data.term_node
     capacity = ta_data.capacity
     link_length = ta_data.link_length
 
     free_flow_time = ta_data.free_flow_time
-    B = ta_data.B
+    b = ta_data.b
     power = ta_data.power
     speed_limit = ta_data.speed_limit
     toll = ta_data.toll
@@ -54,8 +54,8 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
 
     # preparing a graph
-    graph = create_graph(start_node, end_node)
-    link_dic = sparse(start_node, end_node, collect(1:number_of_links))
+    graph = create_graph(init_node, term_node)
+    link_dic = sparse(init_node, term_node, collect(1:number_of_links))
 
     setup_time = time() - setup_time
 
@@ -69,25 +69,25 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
 
     function BPR(x)
-        # travel_time = free_flow_time .* ( 1.0 + B .* (x./capacity).^power )
+        # travel_time = free_flow_time .* ( 1.0 + b .* (x./capacity).^power )
         # generalized_cost = travel_time + toll_factor *toll + distance_factor * link_length
         # return generalized_cost
 
         bpr = similar(x)
         for i=1:length(bpr)
-            bpr[i] = free_flow_time[i] * ( 1.0 + B[i] * (x[i]/capacity[i])^power[i] )
+            bpr[i] = free_flow_time[i] * ( 1.0 + b[i] * (x[i]/capacity[i])^power[i] )
             bpr[i] += toll_factor * toll[i] + distance_factor * link_length[i]
         end
         return bpr
     end
 
     function objective(x)
-        # value = free_flow_time .* ( x + B.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
+        # value = free_flow_time .* ( x + b.* ( x.^(power+1)) ./ (capacity.^power) ./ (power+1))
         # return sum(value)
 
         sum = 0.0
         for i=1:length(x)
-            sum += free_flow_time[i] * ( x[i] + B[i]* ( x[i]^(power[i]+1)) / (capacity[i]^power[i]) / (power[i]+1))
+            sum += free_flow_time[i] * ( x[i] + b[i]* ( x[i]^(power[i]+1)) / (capacity[i]^power[i]) / (power[i]+1))
             sum += toll_factor *toll[i] + distance_factor * link_length[i]
         end
         return sum
@@ -98,7 +98,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     end
 
     function hessian(x)
-        no_arc = Base.length(start_node)
+        no_arc = Base.length(init_node)
 
         h = zeros(no_arc,no_arc)
         h_diag = hessian_diag(x)
@@ -109,32 +109,32 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
 
         return h
 
-        #Link travel time = free flow time * ( 1 + B * (flow/capacity)^Power ).
+        #Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
     end
 
     function hessian_diag(x)
         h_diag = Array{Float64}(undef, size(x))
         for i=1:length(x)
             if power[i] >= 1.0
-                h_diag[i] = free_flow_time[i] * B[i] * power[i] * (x[i]^(power[i]-1)) / (capacity[i]^power[i])
+                h_diag[i] = free_flow_time[i] * b[i] * power[i] * (x[i]^(power[i]-1)) / (capacity[i]^power[i])
             else
                 h_diag[i] = 0 # Some cases, power is zero.
             end
         end
-        # h_diag = free_flow_time .* B .* power .* (x.^(power-1)) ./ (capacity.^power)
+        # h_diag = free_flow_time .* b .* power .* (x.^(power-1)) ./ (capacity.^power)
 
         return h_diag
-        #Link travel time = free flow time * ( 1 + B * (flow/capacity)^Power ).
+        #Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
     end
 
 
     function all_or_nothing_single(travel_time)
         state = LightGraphs.DijkstraState{Float64}
-        x = zeros(size(start_node))
+        x = zeros(size(init_node))
 
         for r=1:size(travel_demand)[1]
             # for each origin node r, find shortest paths to all destination nodes
-            state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node, first_thru_node)
+            state = TA_dijkstra_shortest_paths(graph, travel_time, r, init_node, term_node, first_thru_node)
 
             for s=1:size(travel_demand)[2]
                 # for each destination node s, find the shortest-path vector
@@ -150,20 +150,20 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
     # parallel computing version
     function all_or_nothing_parallel(travel_time)
         state = LightGraphs.DijkstraState{Float64}
-        vv = zeros(size(start_node))
-        x = zeros(size(start_node))
+        vv = zeros(size(init_node))
+        x = zeros(size(init_node))
 
         x = x + @distributed (+) for r=1:size(travel_demand)[1]
             # for each origin node r, find shortest paths to all destination nodes
             # if there is any travel demand starting from node r.
-            vv = zeros(size(start_node))
+            vv = zeros(size(init_node))
 
             if sum(travel_demand, 2)[r] > 0.0
-                state = TA_dijkstra_shortest_paths(graph, travel_time, r, start_node, end_node, first_thru_node)
+                state = TA_dijkstra_shortest_paths(graph, travel_time, r, init_node, term_node, first_thru_node)
 
                 for s=1:size(travel_demand)[2]
                     # for each destination node s, find the shortest-path vector
-                    # v = get_vector(state, r, s, start_node, end_node)
+                    # v = get_vector(state, r, s, init_node, term_node)
 
                     if travel_demand[r,s] > 0.0
                         # load travel demand

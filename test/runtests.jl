@@ -44,3 +44,6 @@ end
     solution_flow = Float64.(solution[:, 3])
     @test norm(link_volume - solution_flow) / norm(solution_flow) < 0.01
 end
+
+
+summarize_ta_data(markdown=true)

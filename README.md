@@ -46,12 +46,12 @@ mutable struct TA_Data
     first_thru_node::Int
     number_of_links::Int
 
-    start_node::Array{Int,1}
-    end_node::Array{Int,1}
+    init_node::Array{Int,1}
+    term_node::Array{Int,1}
     capacity::Array{Float64,1}
     link_length::Array{Float64,1}
     free_flow_time::Array{Float64,1}
-    B::Array{Float64,1}
+    b::Array{Float64,1}
     power::Array{Float64,1}
     speed_limit::Array{Float64,1}
     toll::Array{Float64,1}
@@ -91,7 +91,7 @@ Available optional arguments:
 For example, one may do:
 ```julia
 ta_data = load_ta_network("SiouxFalls")
-link_flow, link_travel_time, objective = 
+link_flow, link_travel_time, objective =
 ta_frank_wolfe(ta_data, method=:cfw, max_iter_no=50000, step=:newton, log=:on, tol=1e-5)
 ```
 
