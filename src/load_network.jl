@@ -328,5 +328,4 @@ function summarize_ta_data()
   end
   println("-"^(17+sum(max_len)))
 
-  return dic
 end # end of summarize_ta_data

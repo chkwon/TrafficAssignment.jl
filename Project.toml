@@ -1,7 +1,7 @@
 name = "TrafficAssignment"
 uuid = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
 repo = "https://github.com/chkwon/TrafficAssignment.jl.git"
-version = "0.5.2"
+version = "0.5.3"
 
 [compat]
 BinDeps = "1.0"
