@@ -13,6 +13,7 @@ include("frank_wolfe.jl")
 
 export
         load_ta_network, download_tntp, read_ta_network,
+        summarize_ta_data, read_ta_summary,
         ta_frank_wolfe,
         TA_Data
 
