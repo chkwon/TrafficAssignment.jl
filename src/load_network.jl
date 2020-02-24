@@ -251,6 +251,36 @@ function load_ta_network(network_name, network_data_file, trip_table_file; best_
 end # end of load_network function
 
 
+function read_ta_summary(network_data_file)
+  @assert ispath(network_data_file)
+
+  number_of_zones = 0
+  number_of_links = 0
+  number_of_nodes = 0
+  first_thru_node = 0
+
+  n = open(network_data_file, "r")
+
+  search_sc(s,c) = something(findfirst(isequal(c), s), 0)
+
+  while (line=readline(n)) != ""
+      if occursin("<NUMBER OF ZONES>", line)
+          number_of_zones = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<NUMBER OF NODES>", line)
+          number_of_nodes = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<FIRST THRU NODE>", line)
+          first_thru_node = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<NUMBER OF LINKS>", line)
+          number_of_links = parse(Int, line[ search_sc(line, '>')+1 : end ] )
+      elseif occursin("<END OF METADATA>", line)
+          break
+      end
+  end
+
+  return number_of_zones, number_of_links, number_of_nodes
+end
+
+
 function summarize_ta_data()
   data_dir = download_tntp()
 
