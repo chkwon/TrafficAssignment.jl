@@ -4,10 +4,10 @@ repo = "https://github.com/chkwon/TrafficAssignment.jl.git"
 version = "0.6.1"
 
 [compat]
-BinDeps = "≥ 1.0"
-LightGraphs = "≥ 1.0"
-Optim = "≥ 0.20"
-DataFrames = "≥ 0.20"
+BinDeps = "1"
+LightGraphs = "1"
+Optim = "0.20"
+DataFrames = "0.20"
 julia = "1"
 
 [deps]
