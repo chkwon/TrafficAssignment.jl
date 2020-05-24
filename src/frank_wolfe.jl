@@ -158,7 +158,7 @@ function ta_frank_wolfe(ta_data; method=:bfw, max_iter_no=2000, step=:exact, log
             # if there is any travel demand starting from node r.
             vv = zeros(size(init_node))
 
-            if sum(travel_demand, 2)[r] > 0.0
+            if sum(travel_demand, dims=2)[r] > 0.0
                 state = TA_dijkstra_shortest_paths(graph, travel_time, r, init_node, term_node, first_thru_node)
 
                 for s=1:size(travel_demand)[2]
