@@ -301,7 +301,7 @@ function summarize_ta_data(;markdown=false)
 
   # Test
   df = DataFrame(Network = String[], Zones = Int[], Links = Int[], Nodes = Int[])
-  dic = Dict()
+  dic = OrderedDict()
   for d in readdir(data_dir)
     if isdir(joinpath(data_dir, d))
       try
