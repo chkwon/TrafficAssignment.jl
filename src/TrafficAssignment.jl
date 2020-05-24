@@ -1,6 +1,5 @@
 module TrafficAssignment
 
-# package code goes here
 using LightGraphs, Optim, BinDeps, DataFrames
 using Distributed, Printf, LinearAlgebra, SparseArrays
 
