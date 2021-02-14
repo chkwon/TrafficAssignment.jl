@@ -100,21 +100,6 @@ using LinearAlgebra
 system_travel_time = dot(link_travel_time, link_flow)
 ```
 
-# Parallel Computing
-
-During the all-or-nothing allocation procedure, this package supports parallel computing. If you want to start with two processes, use the following command to start Julia
-
-```
-julia -p 2
-```
-
-When you directly run your script, use the following command:
-
-```
-julia -p 2 your-script.jl
-```
-
-
 
 # Contributor
 This package is written and maintained by [Changhyun Kwon](http://www.chkwon.net).
