@@ -16,12 +16,11 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-
 [compat]
 BinDeps = "1"
 DataFrames = "0.20"
 LightGraphs = "1"
-Optim = "0.20"
+Optim = "0.20, 0.21, 1.2"
 OrderedCollections = "1.1"
 julia = "1"
 
