@@ -3,6 +3,8 @@ using Test, LinearAlgebra
 using DelimitedFiles
 using Aqua, JET, JuliaFormatter
 
+ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+
 include("test_functions.jl")
 
 @testset verbose = true "TrafficAssignment" begin

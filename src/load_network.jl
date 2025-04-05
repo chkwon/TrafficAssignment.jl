@@ -52,32 +52,9 @@ end
 
 search_sc(s, c) = something(findfirst(isequal(c), s), 0)
 
-function download_tntp(force_download=false)
-    ta_root_dir = joinpath(dirname(dirname(@__FILE__)))
-    dest = ta_root_dir
-    data_dir = joinpath(dest, "TransportationNetworks-$(TNTP_SHA)")
-
-    # Download
-    if !isdir(data_dir) || force_download
-        if isdir(data_dir)
-            rm(data_dir)
-        end
-        file = joinpath(ta_root_dir, "tntp.zip")
-        dl = download(
-            "https://github.com/bstabler/TransportationNetworks/archive/$(TNTP_SHA).zip",
-            file,
-        )
-        run(unpack_cmd(file, dest, ".zip", ""))
-        rm(file)
-    end
-
-    return data_dir
-end
-
 function read_ta_network(network_name)
-    tntp_dir = download_tntp()
+    tntp_dir = datapath()
     network_dir = joinpath(tntp_dir, network_name)
-
     @assert ispath(network_dir)
 
     network_data_file = ""
@@ -306,7 +283,7 @@ function read_ta_summary(network_data_file)
 end
 
 function summarize_ta_data(; markdown=false)
-    data_dir = download_tntp()
+    data_dir = datapath()
 
     # Test
     df = DataFrame(; Network=String[], Zones=Int[], Links=Int[], Nodes=Int[])

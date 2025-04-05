@@ -1,6 +1,6 @@
 
 function test_tntp()
-    data_dir = download_tntp()
+    data_dir = TrafficAssignment.datapath()
 
     # Test
     @testset "Loading Network Data" begin
