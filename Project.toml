@@ -23,6 +23,7 @@ DelimitedFiles = "1"
 Distributed = "1"
 Graphs = "1.12.1"
 JET = "0.9"
+JuliaFormatter = "2.1"
 Libdl = "1"
 LinearAlgebra = "1"
 Optim = "1.12"
@@ -36,7 +37,8 @@ julia = "1.10"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "DelimitedFiles", "JET", "Test"]
+test = ["Aqua", "DelimitedFiles", "JET", "JuliaFormatter", "Test"]

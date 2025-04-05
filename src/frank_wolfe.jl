@@ -8,7 +8,7 @@ include("misc.jl")
 function BPR(x::Vector{Float64}, td::TA_Data)
     bpr = similar(x)
     for i in 1:length(bpr)
-        bpr[i] = td.free_flow_time[i] * ( 1.0 + td.b[i] * (x[i]/td.capacity[i])^td.power[i] )
+        bpr[i] = td.free_flow_time[i] * (1.0 + td.b[i] * (x[i]/td.capacity[i])^td.power[i])
         bpr[i] += td.toll_factor * td.toll[i] + td.distance_factor * td.link_length[i]
     end
     return bpr
@@ -22,12 +22,17 @@ function objective(x::Vector{Float64}, td::TA_Data)
 
     sum = 0.0
     for i in 1:length(x)
-        sum += td.free_flow_time[i] * ( x[i] + td.b[i]* ( x[i]^(td.power[i]+1)) / (td.capacity[i]^td.power[i]) / (td.power[i]+1))
+        sum +=
+            td.free_flow_time[i] * (
+                x[i] +
+                td.b[i] * (x[i]^(td.power[i]+1)) / (td.capacity[i]^td.power[i]) /
+                (td.power[i]+1)
+            )
         sum += td.toll_factor * td.toll[i] + td.distance_factor * td.link_length[i]
     end
     return sum
 end
-    
+
 function hessian(x::Vector{Float64}, td::TA_Data)
     no_arc = length(td.init_node)
 
@@ -35,7 +40,7 @@ function hessian(x::Vector{Float64}, td::TA_Data)
     h_diag = hessian_diag(x, td)
 
     for i in 1:no_arc
-        h[i,i] = h_diag[i]
+        h[i, i] = h_diag[i]
     end
 
     return h
@@ -47,7 +52,9 @@ function hessian_diag(x::Vector{Float64}, td::TA_Data)
     h_diag = Array{Float64}(undef, length(x))
     for i in 1:length(x)
         if td.power[i] >= 1.0
-            h_diag[i] = td.free_flow_time[i] * td.b[i] * td.power[i] * (x[i]^(td.power[i]-1)) / (td.capacity[i]^td.power[i])
+            h_diag[i] =
+                td.free_flow_time[i] * td.b[i] * td.power[i] * (x[i]^(td.power[i]-1)) /
+                (td.capacity[i]^td.power[i])
         else
             h_diag[i] = 0 # Some cases, power is zero.
         end
@@ -58,25 +65,25 @@ function hessian_diag(x::Vector{Float64}, td::TA_Data)
     #Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
 end
 
-
 function all_or_nothing_single(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
-    local state::Graphs.DijkstraState{Float64, Int}
+    local state::Graphs.DijkstraState{Float64,Int}
     x = zeros(size(td.init_node))
 
     for r in 1:size(td.travel_demand)[1]
         # for each origin node r, find shortest paths to all destination nodes
-        state = TA_dijkstra_shortest_paths(graph, travel_time, r, td.init_node, td.term_node, td.first_thru_node)
+        state = TA_dijkstra_shortest_paths(
+            graph, travel_time, r, td.init_node, td.term_node, td.first_thru_node
+        )
 
         for s in 1:size(td.travel_demand)[2]
             # for each destination node s, find the shortest-path vector
             # load travel demand
             # x = x + travel_demand[r,s] * get_vector(state, r, s, link_dic)
-            add_demand_vector!(x, td.travel_demand[r,s], state, r, s, link_dic)
+            add_demand_vector!(x, td.travel_demand[r, s], state, r, s, link_dic)
         end
     end
     return x
 end
-
 
 # parallel computing version
 # function all_or_nothing_parallel(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
@@ -111,7 +118,6 @@ end
 #     return x
 # end
 
-
 function all_or_nothing(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
     # if nprocs() > 1 # if multiple CPU processes are available
     #     return all_or_nothing_parallel(travel_time, td, graph, link_dic)
@@ -123,10 +129,9 @@ function all_or_nothing(travel_time::Vector{Float64}, td::TA_Data, graph, link_d
     return all_or_nothing_single(travel_time, td, graph, link_dic)
 end
 
-
-
-function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3)
-
+function ta_frank_wolfe(
+    td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3
+)
     setup_time = time()
 
     if log==:on
@@ -149,11 +154,9 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
         println("Setup time = $setup_time seconds")
     end
 
-
     n_links = td.number_of_links
 
     iteration_time = time()
-
 
     # Finding a starting feasible solution
     travel_time = BPR(zeros(n_links), td)
@@ -191,26 +194,26 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
 
     for k in 1:max_iter_no
         # Finding yk
-        travel_time = BPR(xk, td) 
-        yk_FW = all_or_nothing(travel_time, td, graph, link_dic) 
+        travel_time = BPR(xk, td)
+        yk_FW = all_or_nothing(travel_time, td, graph, link_dic)
 
         # Basic Frank-Wolfe Direction
-        dk_FW = yk_FW - xk 
+        dk_FW = yk_FW - xk
         Hk_diag = hessian_diag(xk, td) # Hk_diag is a diagonal vector of matrix Hk
 
         # Finding a feasible direction
         if method == :fw # Original Frank-Wolfe
-            dk = dk_FW 
+            dk = dk_FW
         elseif method == :cfw # Conjugate Direction F-W
             if k==1 || tauk > 0.999999 # If tauk=1, then start the process all over again.
-                sk_CFW = yk_FW 
-                dk_CFW = sk_CFW - xk 
+                sk_CFW = yk_FW
+                dk_CFW = sk_CFW - xk
             else
                 dk_bar = sk_CFW - xk  # sk_CFW from the previous iteration k-1
-    
-                Nk = dot( dk_bar, Hk_diag .* dk_FW ) 
-                Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) ) 
-                
+
+                Nk = dot(dk_bar, Hk_diag .* dk_FW)
+                Dk = dot(dk_bar, Hk_diag .* (dk_FW - dk_bar))
+
                 delta = 0.0001
                 if Dk != 0.0 && 0.0 <= Nk/Dk <= 1.0 - delta
                     alphak = Nk/Dk
@@ -219,16 +222,15 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
                 else
                     alphak = 0.0
                 end
-    
+
                 # Generating new sk_CFW and dk_CFW
                 sk_CFW = alphak .* sk_CFW .+ (1.0 - alphak) .* yk_FW
                 dk_CFW = sk_CFW .- xk
             end
-    
+
             # Feasible Direction to Use for CFW
             dk = dk_CFW
         elseif method == :bfw # Bi-Conjugate Direction F-W
-
             if tauk > 0.999999
                 is_first_iteration = true
                 is_second_iteration = true
@@ -241,8 +243,8 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
             elseif k==2 || is_second_iteration  # Second Iteration is like CFW
                 dk_bar = sk_BFW_old - xk # sk_BFW_old from the previous iteration 1
 
-                Nk = dot( dk_bar, Hk_diag .* dk_FW )
-                Dk = dot( dk_bar, Hk_diag .* (dk_FW - dk_bar) )
+                Nk = dot(dk_bar, Hk_diag .* dk_FW)
+                Dk = dot(dk_bar, Hk_diag .* (dk_FW - dk_bar))
 
                 delta = 0.0001
                 if Dk != 0.0 && 0.0 <= Nk/Dk <= 1.0 - delta
@@ -263,16 +265,20 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
                 # sk_BFW, tauk is from iteration k-1
                 # sk_BFW_old is from iteration k-2
 
-                dk_bar  = sk_BFW - xk
+                dk_bar = sk_BFW - xk
                 dk_bbar = tauk * sk_BFW - xk + (1.0 - tauk) * sk_BFW_old
 
-                muk = - dot( dk_bbar, Hk_diag .* dk_FW ) / dot( dk_bbar, Hk_diag .* (sk_BFW_old - sk_BFW) )
-                nuk = - dot( dk_bar, Hk_diag .* dk_FW ) / dot( dk_bar, Hk_diag .* dk_bar) + muk*tauk/(1-tauk)
+                muk =
+                    - dot(dk_bbar, Hk_diag .* dk_FW) /
+                    dot(dk_bbar, Hk_diag .* (sk_BFW_old - sk_BFW))
+                nuk =
+                    - dot(dk_bar, Hk_diag .* dk_FW) / dot(dk_bar, Hk_diag .* dk_bar) +
+                    muk*tauk/(1-tauk)
 
                 muk = max(0.0, muk)
                 nuk = max(0.0, nuk)
 
-                beta0 = 1.0 / ( 1.0 + muk + nuk )
+                beta0 = 1.0 / (1.0 + muk + nuk)
                 beta1 = nuk * beta0
                 beta2 = muk * beta0
 
@@ -286,10 +292,11 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
             # Feasible Direction to Use for BFW
             dk = dk_BFW
         else
-            error("The type of Frank-Wolfe method is specified incorrectly. Use :fw, :cfw, or :bfw.")
+            error(
+                "The type of Frank-Wolfe method is specified incorrectly. Use :fw, :cfw, or :bfw.",
+            )
         end
         # dk is now identified.
-
 
         if step == :exact
             # Line Search from xk in the direction dk
@@ -297,22 +304,28 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
             tauk = optk.minimizer
         elseif step == :newton
             # Newton step
-            tauk = - dot( gradient(xk, td), dk ) / dot( dk, Hk_diag.*dk )
+            tauk = - dot(gradient(xk, td), dk) / dot(dk, Hk_diag .* dk)
             tauk = max(0.0, min(1.0, tauk))
         end
 
-
         # Average Excess Cost
-        average_excess_cost = ( xk' * travel_time - yk_FW' * travel_time ) / sum(td.travel_demand) 
+        average_excess_cost =
+            (xk' * travel_time - yk_FW' * travel_time) / sum(td.travel_demand)
         if log==:on
-            @printf("k=%4d, tauk=%15.10f, objective=%15f, aec=%15.10f\n", k, tauk, objective(xk, td), average_excess_cost)
+            @printf(
+                "k=%4d, tauk=%15.10f, objective=%15f, aec=%15.10f\n",
+                k,
+                tauk,
+                objective(xk, td),
+                average_excess_cost
+            )
         end
 
         # rel_gap = ( objective(xk) - best_objective ) / best_objective
 
         # Convergence Test
         if average_excess_cost < tol
-        # if rel_gap < tol
+            # if rel_gap < tol
             break
         end
 
@@ -321,9 +334,7 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
         xk = new_x
 
         @assert minimum(xk) >= 0
-
     end
-
 
     iteration_time = time() - iteration_time
 
@@ -332,11 +343,6 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
     end
 
     return xk, travel_time, objective(xk, td)
-
 end
-
-
-
-
 
 #

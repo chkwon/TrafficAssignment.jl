@@ -1,7 +1,7 @@
 # TrafficAssignment.jl
 
-[![Build Status](https://github.com/gdalle/TrafficAssignment.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gdalle/TrafficAssignment.jl/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/gdalle/TrafficAssignment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gdalle/TrafficAssignment.jl)
+[![Build Status](https://github.com/gdalle/TrafficAssignment.jl/actions/workflows/Test.yml/badge.svg?branch=master)](https://github.com/gdalle/TrafficAssignment.jl/actions/workflows/Test.yml?query=branch%3Amaster)
+[![Coverage](https://codecov.io/gh/gdalle/TrafficAssignment.jl/branch/master/graph/badge.svg)](https://app.codecov.io/gh/gdalle/TrafficAssignment.jl)
 
 
 This package for [the Julia Language](http://www.julialang.org) does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
