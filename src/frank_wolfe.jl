@@ -60,7 +60,7 @@ end
 
 
 function all_or_nothing_single(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
-    local state::LightGraphs.DijkstraState{Float64, Int}
+    local state::Graphs.DijkstraState{Float64, Int}
     x = zeros(size(td.init_node))
 
     for r in 1:size(td.travel_demand)[1]
@@ -80,7 +80,7 @@ end
 
 # parallel computing version
 # function all_or_nothing_parallel(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
-#     local state::LightGraphs.DijkstraState{Float64, Int}
+#     local state::Graphs.DijkstraState{Float64, Int}
 #     vv = zeros(size(td.init_node))
 #     x = zeros(size(td.init_node))
 
@@ -131,7 +131,7 @@ function ta_frank_wolfe(td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact,
 
     if log==:on
         println("-------------------------------------")
-        println("Network Name: $(ta_data.network_name)")
+        println("Network Name: $(td.network_name)")
         println("Method: $method")
         println("Line Search Step: $step")
         println("Maximum Interation Number: $max_iter_no")

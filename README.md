@@ -1,7 +1,7 @@
 # TrafficAssignment.jl
 
-[![Build Status](https://github.com/chkwon/TrafficAssignment.jl/workflows/CI/badge.svg?branch=master)](https://github.com/chkwon/TrafficAssignment.jl/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/chkwon/TrafficAssignment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/chkwon/TrafficAssignment.jl)
+[![Build Status](https://github.com/gdalle/TrafficAssignment.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gdalle/TrafficAssignment.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/gdalle/TrafficAssignment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gdalle/TrafficAssignment.jl)
 
 
 This package for [the Julia Language](http://www.julialang.org) does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
@@ -13,7 +13,7 @@ This package for [the Julia Language](http://www.julialang.org) does basically t
 julia> Pkg.add("TrafficAssignment")
 ```
 
-This will install [LightGraphs.jl](https://github.com/JuliaGraphs/LightGraphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
+This will install [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) and [Optim.jl](https://github.com/JuliaOpt/Optim.jl), if you don't have them already.
 
 To check if works
 ```julia
