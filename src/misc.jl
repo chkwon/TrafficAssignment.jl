@@ -1,13 +1,15 @@
 
-function TA_dijkstra_shortest_paths(graph, travel_time, origin, init_node, term_node, first_thru_node)
+function TA_dijkstra_shortest_paths(
+    graph, travel_time, origin, init_node, term_node, first_thru_node
+)
     no_node = nv(graph)
     no_arc = ne(graph)
 
     distmx = Inf*ones(no_node, no_node)
     for i in 1:no_arc
-      if term_node[i] >= first_thru_node
-          distmx[init_node[i], term_node[i]] = travel_time[i]
-      end
+        if term_node[i] >= first_thru_node
+            distmx[init_node[i], term_node[i]] = travel_time[i]
+        end
     end
 
     state = dijkstra_shortest_paths(graph, origin, distmx)
@@ -20,7 +22,7 @@ function TA_dijkstra_shortest_paths(graph, travel_time, origin, init_node, term_
 
     distmx = Inf*ones(no_node, no_node)
     for i in 1:no_arc
-      distmx[init_node[i], term_node[i]] = travel_time[i]
+        distmx[init_node[i], term_node[i]] = travel_time[i]
     end
 
     state = dijkstra_shortest_paths(graph, origin, distmx)
@@ -34,13 +36,11 @@ function create_graph(init_node, term_node)
     no_arc = Base.length(init_node)
 
     graph = DiGraph(no_node)
-    for i=1:no_arc
+    for i in 1:no_arc
         add_edge!(graph, init_node[i], term_node[i])
     end
     return graph
 end
-
-
 
 function get_vector(state, origin, destination, link_dic)
     current = destination
@@ -53,7 +53,7 @@ function get_vector(state, origin, destination, link_dic)
         # println("origin=$origin, destination=$destination, parent=$parent, current=$current")
 
         if parent != 0
-            link_idx = link_dic[parent,current]
+            link_idx = link_dic[parent, current]
             if link_idx != 0
                 x[link_idx] = 1
             end
@@ -66,27 +66,22 @@ function get_vector(state, origin, destination, link_dic)
 end
 
 function add_demand_vector!(x, demand, state, origin, destination, link_dic)
-  current = destination
-  parent = -1
+    current = destination
+    parent = -1
 
-  while parent != origin && origin != destination && current != 0
-      parent = state.parents[current]
+    while parent != origin && origin != destination && current != 0
+        parent = state.parents[current]
 
-      if parent != 0
-          link_idx = link_dic[parent,current]
-          if link_idx != 0
-              x[link_idx] += demand
-          end
-      end
+        if parent != 0
+            link_idx = link_dic[parent, current]
+            if link_idx != 0
+                x[link_idx] += demand
+            end
+        end
 
-      current = parent
-  end
+        current = parent
+    end
 end
-
-
-
-
-
 
 # function get_shortest_path(init_node, term_node, link_length, origin, destination)
 #     @assert Base.length(init_node)==Base.length(term_node)
