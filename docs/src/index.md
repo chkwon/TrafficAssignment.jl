@@ -6,7 +6,7 @@
 
 This package for [the Julia Language](http://www.julialang.org) does basically two tasks: (1) loading a network data and (2) finding a user equilibrium traffic pattern. See [Traffic Assignment](https://en.wikipedia.org/wiki/Route_assignment).
 
-## Install
+# Install
 
 
 ```julia

@@ -1,7 +1,7 @@
 module TrafficAssignment
 
 # outside packages
-using BinDeps
+using BinDeps: unpack_cmd
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
 using Graphs

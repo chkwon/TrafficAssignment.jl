@@ -1,7 +1,11 @@
 using TrafficAssignment
 using Test, LinearAlgebra
 using DelimitedFiles
-using Aqua, JET, JuliaFormatter
+using Aqua, Documenter, JET, JuliaFormatter
+
+DocMeta.setdocmeta!(
+    TrafficAssignment, :DocTestSetup, :(using TrafficAssignment); recursive=true
+)
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
@@ -12,11 +16,17 @@ include("test_functions.jl")
         @testset "Aqua" begin
             Aqua.test_all(TrafficAssignment)
         end
+        @testset "Doctests" begin
+            Documenter.doctest(TrafficAssignment)
+        end
         @testset "JET" begin
             JET.test_package(TrafficAssignment; target_defined_modules=true)
         end
         @testset "JuliaFormatter" begin
             @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
+        end
+        @testset "Undocumented names" begin
+            @test_broken isempty(Base.Docs.undocumented_names(TrafficAssignment))
         end
     end
 
