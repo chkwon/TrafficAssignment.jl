@@ -360,8 +360,6 @@ function solve_frank_wolfe(
             )
         end
 
-        # rel_gap = ( objective(xk) - best_objective ) / best_objective
-
         # Convergence Test
         if average_excess_cost < tol
             # if rel_gap < tol

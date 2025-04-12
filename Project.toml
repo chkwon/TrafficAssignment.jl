@@ -5,6 +5,7 @@ version = "0.6.4"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -12,6 +13,7 @@ DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
@@ -20,6 +22,8 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [compat]
 Aqua = "0.8.11"
 BinDeps = "1.0.2"
+CairoMakie = "0.13.4"
+CSV = "0.10.15"
 DataDeps = "0.7.13"
 DataFrames = "1.7"
 DelimitedFiles = "1"
@@ -31,6 +35,7 @@ JET = "0.9"
 JuliaFormatter = "2.1"
 Libdl = "1"
 LinearAlgebra = "1"
+Makie = "0.22.4"
 Optim = "1.12"
 OrderedCollections = "1.1"
 Printf = "1"
@@ -40,12 +45,14 @@ julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "DelimitedFiles", "Documenter", "JET", "JuliaFormatter", "LinearAlgebra", "Test"]
+test = ["Aqua", "CairoMakie", "DelimitedFiles", "Documenter", "JET", "JuliaFormatter", "LinearAlgebra", "SparseArrays", "Test"]

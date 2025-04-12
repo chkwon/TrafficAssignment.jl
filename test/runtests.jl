@@ -1,7 +1,8 @@
 using TrafficAssignment
-using Test, LinearAlgebra
+using Test, LinearAlgebra, SparseArrays
 using DelimitedFiles
 using Aqua, Documenter, JET, JuliaFormatter
+using CairoMakie
 
 DocMeta.setdocmeta!(
     TrafficAssignment, :DocTestSetup, :(using TrafficAssignment); recursive=true
@@ -28,6 +29,11 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
                 @test isempty(Base.Docs.undocumented_names(TrafficAssignment))
             end
         end
+    end
+
+    @testset "Display" begin
+        problem = TrafficAssignmentProblem("SiouxFalls")
+        @test startswith(string(problem), "Traffic")
     end
 
     @testset "Read all instances" begin
@@ -63,22 +69,28 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
     @testset "Comparing results" begin
         @testset "Sioux Falls" begin
             problem = TrafficAssignmentProblem("SiouxFalls")
+            I, J, n = problem.init_node, problem.term_node, problem.number_of_nodes
             link_volume, link_travel_time, objective = solve_frank_wolfe(
                 problem; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
             )
-            solution, header = readdlm("SiouxFalls_flow.csv", ','; header=true)
-            solution_flow = Float64.(solution[:, 3])
-            @test norm(link_volume - solution_flow) / norm(solution_flow) < 0.01
+            my_flow_volume = sparse(I, J, link_volume, n, n)
+            @test norm(problem.optimal_flow_volume - my_flow_volume) /
+                  norm(problem.optimal_flow_volume) < 0.01
         end
 
         @testset "Anaheim" begin
             problem = TrafficAssignmentProblem("Anaheim")
+            I, J, n = problem.init_node, problem.term_node, problem.number_of_nodes
             link_volume, link_travel_time, objective = solve_frank_wolfe(
                 problem; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
             )
-            solution, header = readdlm("Anaheim_flow.csv", ','; header=true)
-            solution_flow = Float64.(solution[:, 3])
-            @test norm(link_volume - solution_flow) / norm(solution_flow) < 0.01
+            my_flow_volume = sparse(I, J, link_volume, n, n)
+            @test norm(problem.optimal_flow_volume - my_flow_volume) /
+                  norm(problem.optimal_flow_volume) < 0.01
         end
+    end
+
+    @testset "Plotting" begin
+        plot_network(TrafficAssignmentProblem("SiouxFalls"))
     end
 end

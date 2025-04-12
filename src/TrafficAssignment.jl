@@ -7,10 +7,12 @@ module TrafficAssignment
 
 # outside packages
 using BinDeps: unpack_cmd
+using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
 using DocStringExtensions
 using Graphs
+using Makie
 using Optim
 using OrderedCollections
 # standard libraries
@@ -21,6 +23,7 @@ using SparseArrays
 
 include("load_network.jl")
 include("frank_wolfe.jl")
+include("plot.jl")
 
 # latest commit to bstabler/TransportationNetworks: August 2nd, 2023
 const LAST_COMMIT_SHA = "375e0da93858c547230c5cf9ea8a96de4ccff29e"  # to update
@@ -69,6 +72,9 @@ function datapath(instance_name::AbstractString)
     )
 end
 
-export TrafficAssignmentProblem, list_instances, summarize_instances, solve_frank_wolfe
+export TrafficAssignmentProblem
+export list_instances, summarize_instances
+export solve_frank_wolfe
+export plot_network
 
 end # module
