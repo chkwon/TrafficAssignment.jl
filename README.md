@@ -18,8 +18,8 @@ You can easily load networks from the [`TransportationNetworks` repository](http
 
 ```jldoctest readme
 using TrafficAssignment
-ta_data = load_ta_network("SiouxFalls")
-ta_data.number_of_zones
+problem = TrafficAssignmentProblem("SiouxFalls")
+problem.number_of_zones
 
 # output
 
@@ -30,7 +30,7 @@ And then you can solve the equilibrium problem and compute the total system trav
 
 ```jldoctest readme
 using LinearAlgebra
-link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="off", tol=1e-2)
+link_flow, link_travel_time, objective = solve_frank_wolfe(problem, log="off", tol=1e-2)
 system_travel_time = round(dot(link_travel_time, link_flow); sigdigits=3)
 
 # output
