@@ -4,6 +4,7 @@ module TrafficAssignment
 using BinDeps: unpack_cmd
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
+using DocStringExtensions
 using Graphs
 using Optim
 using OrderedCollections
@@ -23,10 +24,12 @@ function __init__()
     name = "TransportationNetworks"
     message = "TransportationNetworks is a repository of real-life road networks, used to study the Traffic Assignment Problem. It is available at <https://github.com/bstabler/TransportationNetworks>."
     remote_path = "https://github.com/bstabler/TransportationNetworks/archive/$(LAST_COMMIT_SHA).zip"
+    hash = "3ef8f870c14fc189a31d34266140d21883ce020cb8847788b1e2caea1e00a734"
     datadep = DataDep(
         name,
         message,
-        remote_path;
+        remote_path,
+        hash;
         fetch_method=DataDeps.fetch_default,
         post_fetch_method=DataDeps.unpack,
     )

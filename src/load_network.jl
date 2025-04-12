@@ -5,6 +5,13 @@
 #Link generalized cost = Link travel time + toll_factor * toll + distance_factor * distance
 
 # Traffic Assignment Data structure
+"""
+$(TYPEDEF)
+
+# Fields
+
+$(TYPEDFIELDS)
+"""
 mutable struct TA_Data
     network_name::String
 
@@ -82,6 +89,9 @@ function read_ta_network(network_name)
     return network_data_file, trip_table_file
 end
 
+"""
+$(SIGNATURES)
+"""
 function load_ta_network(
     network_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0
 )

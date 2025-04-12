@@ -1,5 +1,8 @@
 using Documenter
 using TrafficAssignment
+ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+
+load_ta_network("SiouxFalls")
 
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md"); force=true)
 

@@ -3,7 +3,53 @@
 
 # required packages: Graphs, Optim
 
-include("misc.jl")
+function TA_dijkstra_shortest_paths(
+    graph, travel_time, origin, init_node, term_node, first_thru_node
+)
+    no_node = nv(graph)
+    no_arc = ne(graph)
+
+    distmx = Inf*ones(no_node, no_node)
+    for i in 1:no_arc
+        if term_node[i] >= first_thru_node
+            distmx[init_node[i], term_node[i]] = travel_time[i]
+        end
+    end
+
+    state = dijkstra_shortest_paths(graph, origin, distmx)
+    return state
+end
+
+function create_graph(init_node, term_node)
+    @assert Base.length(init_node)==Base.length(term_node)
+
+    no_node = max(maximum(init_node), maximum(term_node))
+    no_arc = Base.length(init_node)
+
+    graph = DiGraph(no_node)
+    for i in 1:no_arc
+        add_edge!(graph, init_node[i], term_node[i])
+    end
+    return graph
+end
+
+function add_demand_vector!(x, demand, state, origin, destination, link_dic)
+    current = destination
+    parent = -1
+
+    while parent != origin && origin != destination && current != 0
+        parent = state.parents[current]
+
+        if parent != 0
+            link_idx = link_dic[parent, current]
+            if link_idx != 0
+                x[link_idx] += demand
+            end
+        end
+
+        current = parent
+    end
+end
 
 function BPR(x::Vector{Float64}, td::TA_Data)
     bpr = similar(x)
@@ -85,39 +131,6 @@ function all_or_nothing_single(travel_time::Vector{Float64}, td::TA_Data, graph,
     return x
 end
 
-# parallel computing version
-# function all_or_nothing_parallel(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
-#     local state::Graphs.DijkstraState{Float64, Int}
-#     vv = zeros(size(td.init_node))
-#     x = zeros(size(td.init_node))
-
-#     x = x .+ @distributed (+) for r in 1:size(td.travel_demand)[1]
-#         # for each origin node r, find shortest paths to all destination nodes
-#         # if there is any travel demand starting from node r.
-#         vv = zeros(size(td.init_node))
-
-#         if sum(td.travel_demand, dims=2)[r] > 0.0
-#             state = TA_dijkstra_shortest_paths(graph, travel_time, r, td.init_node, td.term_node, td.first_thru_node)
-
-#             for s=1:size(td.travel_demand)[2]
-#                 # for each destination node s, find the shortest-path vector
-#                 # v = get_vector(state, r, s, init_node, term_node)
-
-#                 if td.travel_demand[r,s] > 0.0
-#                     # load travel demand
-#                     # vv = vv + travel_demand[r,s] * get_vector(state, r, s, link_dic)
-#                     add_demand_vector!(vv, td.travel_demand[r,s], state, r, s, link_dic)
-#                 end
-#             end
-
-#         end
-
-#         vv
-#     end
-
-#     return x
-# end
-
 function all_or_nothing(travel_time::Vector{Float64}, td::TA_Data, graph, link_dic)
     # if nprocs() > 1 # if multiple CPU processes are available
     #     return all_or_nothing_parallel(travel_time, td, graph, link_dic)
@@ -129,6 +142,23 @@ function all_or_nothing(travel_time::Vector{Float64}, td::TA_Data, graph, link_d
     return all_or_nothing_single(travel_time, td, graph, link_dic)
 end
 
+"""
+$(SIGNATURES)
+
+This function implements methods to find traffic equilibrium flows: currently, Frank-Wolfe (FW) method, Conjugate FW (CFW) method, and Bi-conjugate FW (BFW) method.
+
+# Settings
+
+  - `method=:fw / :cfw / :bfw` (default=`:bfw`)
+  - `step=:exact / :newton`: exact line search using golden section / a simple Newton-type step (default=`:exact`)
+  - `log=:on / :off`: displays information from each iteration or not (default=`:off`)
+  - `max_iter_no::Integer`: maximum number of iterations (default=`2000`)
+  - `tol::Real`: tolerance for the Average Excess Cost (AEC) (default=`1e-3`)
+
+# References
+
+  - Mitradjieva, M., & Lindberg, P. O. (2013). [The Stiff Is Moving-Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment](http://pubsonline.informs.org/doi/abs/10.1287/trsc.1120.0409). *Transportation Science*, 47(2), 280-293.
+"""
 function ta_frank_wolfe(
     td::TA_Data; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3
 )
@@ -344,5 +374,3 @@ function ta_frank_wolfe(
 
     return xk, travel_time, objective(xk, td)
 end
-
-#
