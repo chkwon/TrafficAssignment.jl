@@ -17,25 +17,26 @@ pkg> add https://github.com/gdalle/TrafficAssignment.jl
 You can easily load networks from the [`TransportationNetworks` repository](https://github.com/bstabler/TransportationNetworks):
 
 ```jldoctest readme
-using TrafficAssignment
-problem = TrafficAssignmentProblem("SiouxFalls")
-problem.number_of_zones
+julia> using TrafficAssignment
 
-# output
-
-24
+julia> problem = TrafficAssignmentProblem("SiouxFalls")
+Traffic assignment problem on the SiouxFalls network with 24 nodes and 76 links
 ```
 
 And then you can solve the equilibrium problem and compute the total system travel time:
 
 ```jldoctest readme
-using LinearAlgebra
-link_flow, link_travel_time, objective = solve_frank_wolfe(problem, log="off", tol=1e-2)
-system_travel_time = round(dot(link_travel_time, link_flow); sigdigits=3)
+julia> flow = solve_frank_wolfe(problem; max_iteration=1000, verbose=false)
+24×24 SparseArrays.SparseMatrixCSC{Float64, Int64} with 76 stored entries:
+⎡⠎⡡⡐⠀⠀⡠⠀⠀⠀⠀⠀⠀⎤
+⎢⠐⠈⢊⡰⡁⠀⠀⢀⠠⠀⠀⠀⎥
+⎢⠀⡠⠁⠈⠪⡢⡠⠒⠂⠀⠀⠀⎥
+⎢⠀⠀⠀⢀⢠⠊⠠⠂⣀⠄⠠⠊⎥
+⎢⠀⠀⠀⠂⠈⠀⠀⠜⢄⡱⣀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⡠⠂⠀⠘⡪⡪⎦
 
-# output
-
-7.47e6
+julia> round(social_cost(problem, flow), sigdigits=4)
+7.481e6
 ```
 
 ## Credits

@@ -1,65 +1,3 @@
-# Sioux Falls network data
-# http://www.bgu.ac.il/~bargera/tntp/
-
-#Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
-#Link generalized cost = Link travel time + toll_factor * toll + distance_factor * distance
-
-# Traffic Assignment Data structure
-"""
-$(TYPEDEF)
-
-# Fields
-
-$(TYPEDFIELDS)
-"""
-@kwdef struct TrafficAssignmentProblem{
-    C<:Union{Nothing,Vector{Float64}},F<:Union{Nothing,SparseMatrixCSC{Float64,Int}}
-}
-    instance_name::String
-
-    # network table
-    number_of_zones::Int
-    number_of_nodes::Int
-    first_thru_node::Int
-    number_of_links::Int
-
-    init_node::Vector{Int}
-    term_node::Vector{Int}
-    capacity::Vector{Float64}
-    link_length::Vector{Float64}
-    free_flow_time::Vector{Float64}
-    b::Vector{Float64}
-    power::Vector{Float64}
-    speed_limit::Vector{Float64}
-    toll::Vector{Float64}
-    link_type::Vector{Int}
-
-    # trips table
-    total_od_flow::Float64
-    travel_demand::Matrix{Float64}
-    od_pairs::Vector{Tuple{Int,Int}}
-
-    # node table
-    X::C
-    Y::C
-
-    # flow table
-    optimal_flow_volume::F
-    optimal_flow_cost::F
-
-    # cost parameters
-    toll_factor::Float64
-    distance_factor::Float64
-end
-
-function Base.show(io::IO, problem::TrafficAssignmentProblem)
-    (; instance_name, number_of_nodes, number_of_links) = problem
-    return print(
-        io,
-        "Traffic assignment problem on the $instance_name network with $number_of_nodes nodes and $number_of_links links",
-    )
-end
-
 search_sc(s, c) = something(findfirst(isequal(c), s), 0)
 
 """
@@ -117,60 +55,84 @@ function TrafficAssignmentProblem(
     number_of_nodes = 0
     first_thru_node = 0
 
-    n = open(net_file, "r")
-
-    while (line = readline(n)) != ""
-        if occursin("<NUMBER OF ZONES>", line)
-            number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<NUMBER OF NODES>", line)
-            number_of_nodes = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<FIRST THRU NODE>", line)
-            first_thru_node = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<NUMBER OF LINKS>", line)
-            number_of_links = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<END OF METADATA>", line)
-            break
-        end
-    end
-
-    @assert number_of_links > 0
-
-    init_node = zeros(Int, number_of_links)
-    term_node = zeros(Int, number_of_links)
-    capacity = zeros(Float64, number_of_links)
-    link_length = zeros(Float64, number_of_links)
-    free_flow_time = zeros(Float64, number_of_links)
-    b = zeros(Float64, number_of_links)
-    power = zeros(Float64, number_of_links)
-    speed_limit = zeros(Float64, number_of_links)
-    toll = zeros(Float64, number_of_links)
-    link_type = zeros(Int, number_of_links)
-
-    idx = 1
-    while !eof(n)
-        line = readline(n)
-        if occursin("~", line) || line == ""
-            continue
+    (;
+        init_node,
+        term_node,
+        capacity,
+        link_length,
+        free_flow_time,
+        b,
+        power,
+        speed_limit,
+        toll,
+        link_type,
+    ) = open(net_file, "r") do f
+        while (line = readline(f)) != ""
+            if occursin("<NUMBER OF ZONES>", line)
+                number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<NUMBER OF NODES>", line)
+                number_of_nodes = parse(Int, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<FIRST THRU NODE>", line)
+                first_thru_node = parse(Int, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<NUMBER OF LINKS>", line)
+                number_of_links = parse(Int, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<END OF METADATA>", line)
+                break
+            end
         end
 
-        if occursin(";", line)
-            line = strip(line, [' ', '\n', ';'])
-            line = replace(line, ";" => "")
+        @assert number_of_links > 0
 
-            numbers = split(line)
-            init_node[idx] = parse(Int, numbers[1])
-            term_node[idx] = parse(Int, numbers[2])
-            capacity[idx] = parse(Float64, numbers[3])
-            link_length[idx] = parse(Float64, numbers[4])
-            free_flow_time[idx] = parse(Float64, numbers[5])
-            b[idx] = parse(Float64, numbers[6])
-            power[idx] = parse(Float64, numbers[7])
-            speed_limit[idx] = parse(Float64, numbers[8])
-            toll[idx] = parse(Float64, numbers[9])
-            link_type[idx] = Int(round(parse(Float64, numbers[10])))
+        init_node = zeros(Int, number_of_links)
+        term_node = zeros(Int, number_of_links)
+        capacity = zeros(Float64, number_of_links)
+        link_length = zeros(Float64, number_of_links)
+        free_flow_time = zeros(Float64, number_of_links)
+        b = zeros(Float64, number_of_links)
+        power = zeros(Float64, number_of_links)
+        speed_limit = zeros(Float64, number_of_links)
+        toll = zeros(Float64, number_of_links)
+        link_type = zeros(Int, number_of_links)
 
-            idx = idx + 1
+        idx = 1
+        while !eof(f)
+            line = readline(f)
+            if occursin("~", line) || line == ""
+                continue
+            end
+
+            if occursin(";", line)
+                line = strip(line, [' ', '\n', ';'])
+                line = replace(line, ";" => "")
+
+                numbers = split(line)
+                init_node[idx] = parse(Int, numbers[1])
+                term_node[idx] = parse(Int, numbers[2])
+                capacity[idx] = parse(Float64, numbers[3])
+                link_length[idx] = parse(Float64, numbers[4])
+                free_flow_time[idx] = parse(Float64, numbers[5])
+                b[idx] = parse(Float64, numbers[6])
+                power[idx] = parse(Float64, numbers[7])
+                speed_limit[idx] = parse(Float64, numbers[8])
+                toll[idx] = parse(Float64, numbers[9])
+                link_type[idx] = Int(round(parse(Float64, numbers[10])))
+
+                idx = idx + 1
+            end
         end
+
+        return (;
+            init_node,
+            term_node,
+            capacity,
+            link_length,
+            free_flow_time,
+            b,
+            power,
+            speed_limit,
+            toll,
+            link_type,
+        )
     end
 
     # trips table
@@ -178,49 +140,51 @@ function TrafficAssignmentProblem(
     number_of_zones_trip = 0
     total_od_flow = 0
 
-    f = open(trips_file, "r")
-
-    while (line = readline(f)) != ""
-        if occursin("<NUMBER OF ZONES>", line)
-            number_of_zones_trip = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<TOTAL OD FLOW>", line)
-            total_od_flow = parse(Float64, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<END OF METADATA>", line)
-            break
+    (; travel_demand, od_pairs) = open(trips_file, "r") do f
+        while (line = readline(f)) != ""
+            if occursin("<NUMBER OF ZONES>", line)
+                number_of_zones_trip = parse(Int, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<TOTAL OD FLOW>", line)
+                total_od_flow = parse(Float64, line[(search_sc(line, '>') + 1):end])
+            elseif occursin("<END OF METADATA>", line)
+                break
+            end
         end
-    end
 
-    @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
-    @assert total_od_flow > 0
+        @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
+        @assert total_od_flow > 0
 
-    travel_demand = zeros(Float64, number_of_zones, number_of_zones)
-    od_pairs = Tuple{Int,Int}[]
+        travel_demand = zeros(Float64, number_of_zones, number_of_zones)
+        od_pairs = Tuple{Int,Int}[]
 
-    origin = -1
+        origin = -1
 
-    while !eof(f)
-        line = readline(f)
+        while !eof(f)
+            line = readline(f)
 
-        if line == ""
-            origin = -1
-            continue
-        elseif occursin("Origin", line)
-            origin = parse(Int, split(line)[2])
-        elseif occursin(";", line)
-            pairs = split(line, ";")
-            for i in 1:size(pairs)[1]
-                if occursin(":", pairs[i])
-                    pair = split(pairs[i], ":")
-                    destination = parse(Int, strip(pair[1]))
-                    od_flow = parse(Float64, strip(pair[2]))
+            if line == ""
+                origin = -1
+                continue
+            elseif occursin("Origin", line)
+                origin = parse(Int, split(line)[2])
+            elseif occursin(";", line)
+                pairs = split(line, ";")
+                for i in 1:size(pairs)[1]
+                    if occursin(":", pairs[i])
+                        pair = split(pairs[i], ":")
+                        destination = parse(Int, strip(pair[1]))
+                        od_flow = parse(Float64, strip(pair[2]))
 
-                    # println("origin=$origin, destination=$destination, flow=$od_flow")
+                        # println("origin=$origin, destination=$destination, flow=$od_flow")
 
-                    travel_demand[origin, destination] = od_flow
-                    push!(od_pairs, (origin, destination))
+                        travel_demand[origin, destination] = od_flow
+                        push!(od_pairs, (origin, destination))
+                    end
                 end
             end
         end
+
+        return (; travel_demand, od_pairs)
     end
 
     # node table
@@ -261,6 +225,7 @@ function TrafficAssignmentProblem(
         optimal_flow_cost = nothing
     end
 
+    n = number_of_nodes
     return TrafficAssignmentProblem(;
         instance_name,
         number_of_zones,
@@ -269,14 +234,14 @@ function TrafficAssignmentProblem(
         number_of_links,
         init_node,
         term_node,
-        capacity,
-        link_length,
-        free_flow_time,
-        b,
-        power,
-        speed_limit,
-        toll,
-        link_type,
+        capacity=sparse(init_node, term_node, capacity, n, n),
+        link_length=sparse(init_node, term_node, link_length, n, n),
+        free_flow_time=sparse(init_node, term_node, free_flow_time, n, n),
+        b=sparse(init_node, term_node, b, n, n),
+        power=sparse(init_node, term_node, power, n, n),
+        speed_limit=sparse(init_node, term_node, speed_limit, n, n),
+        toll=sparse(init_node, term_node, toll, n, n),
+        link_type=sparse(init_node, term_node, link_type, n, n),
         total_od_flow,
         travel_demand,
         od_pairs,

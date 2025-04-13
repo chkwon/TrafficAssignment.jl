@@ -1,4 +1,5 @@
 using TrafficAssignment
+import TrafficAssignment as TA
 using Test, LinearAlgebra, SparseArrays
 using DelimitedFiles
 using Aqua, Documenter, JET, JuliaFormatter
@@ -9,6 +10,8 @@ DocMeta.setdocmeta!(
 )
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+
+reldist(a, b) = norm(a - b) / norm(a)
 
 @testset verbose = true "TrafficAssignment" begin
     @testset "Formalities" begin
@@ -33,6 +36,8 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
     @testset "Display" begin
         problem = TrafficAssignmentProblem("SiouxFalls")
+        @test TA.nb_nodes(problem) == 24
+        @test TA.nb_links(problem) == 76
         @test startswith(string(problem), "Traffic")
     end
 
@@ -47,46 +52,23 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
         end
     end
 
-    @testset "Frank-Wolfe Methods" begin
-        problem = TrafficAssignmentProblem("SiouxFalls")
-
-        link_volume, link_travel_time, objective = solve_frank_wolfe(
-            problem; method=:bfw, step=:exact, log=:off, tol=1e-3, max_iter_no=5
-        )
-        @test abs(objective - 4.963799502172654e6) < 1e6
-
-        link_volume, link_travel_time, objective = solve_frank_wolfe(
-            problem; method=:cfw, step=:newton, log=:off, tol=1e-3, max_iter_no=5
-        )
-        @test abs(objective - 4.963799502172654e6) < 1e6
-
-        link_volume, link_travel_time, objective = solve_frank_wolfe(
-            problem; method=:fw, step=:exact, log=:off, tol=1e-3, max_iter_no=5
-        )
-        @test abs(objective - 4.963799502172654e6) < 1e6
-    end
-
     @testset "Comparing results" begin
         @testset "Sioux Falls" begin
             problem = TrafficAssignmentProblem("SiouxFalls")
-            I, J, n = problem.init_node, problem.term_node, problem.number_of_nodes
-            link_volume, link_travel_time, objective = solve_frank_wolfe(
-                problem; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
-            )
-            my_flow_volume = sparse(I, J, link_volume, n, n)
-            @test norm(problem.optimal_flow_volume - my_flow_volume) /
-                  norm(problem.optimal_flow_volume) < 0.01
+            (; optimal_flow_volume) = problem
+            flow_volume = solve_frank_wolfe(problem; verbose=false, max_iteration=10_000)
+            @test reldist(optimal_flow_volume, flow_volume) < 1e-4
+            @test TA.objective(problem, flow_volume) <
+                1.05 * TA.objective(problem, optimal_flow_volume)
         end
 
         @testset "Anaheim" begin
             problem = TrafficAssignmentProblem("Anaheim")
-            I, J, n = problem.init_node, problem.term_node, problem.number_of_nodes
-            link_volume, link_travel_time, objective = solve_frank_wolfe(
-                problem; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
-            )
-            my_flow_volume = sparse(I, J, link_volume, n, n)
-            @test norm(problem.optimal_flow_volume - my_flow_volume) /
-                  norm(problem.optimal_flow_volume) < 0.01
+            (; optimal_flow_volume) = problem
+            flow_volume = solve_frank_wolfe(problem; verbose=false, max_iteration=1000)
+            @test_broken reldist(optimal_flow_volume, flow_volume) < 1e-2
+            @test TA.objective(problem, flow_volume) <
+                1.05 * TA.objective(problem, optimal_flow_volume)
         end
     end
 

@@ -11,18 +11,21 @@ using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
 using DocStringExtensions
+using FrankWolfe
 using Graphs
 using Makie
 using Optim
 using OrderedCollections
+using SimpleWeightedGraphs
 # standard libraries
 using Distributed
 using Printf
 using LinearAlgebra
 using SparseArrays
 
-include("load_network.jl")
-include("frank_wolfe.jl")
+include("types.jl")
+include("load.jl")
+include("solve.jl")
 include("plot.jl")
 
 # latest commit to bstabler/TransportationNetworks: August 2nd, 2023
@@ -74,7 +77,7 @@ end
 
 export TrafficAssignmentProblem
 export list_instances, summarize_instances
-export solve_frank_wolfe
+export solve_frank_wolfe, social_cost
 export plot_network
 
 end # module
