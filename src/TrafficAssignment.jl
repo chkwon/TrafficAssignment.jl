@@ -14,9 +14,11 @@ using DocStringExtensions
 using FrankWolfe
 using Graphs
 using Makie
+using MapTiles
 using Optim
 using OrderedCollections
 using SimpleWeightedGraphs
+using Tyler
 # standard libraries
 using Distributed
 using Printf
@@ -78,6 +80,6 @@ end
 export TrafficAssignmentProblem
 export list_instances, summarize_instances
 export solve_frank_wolfe, social_cost
-export plot_network
+export plot_network, plot_network_osm
 
 end # module

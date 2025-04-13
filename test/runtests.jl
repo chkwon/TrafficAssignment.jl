@@ -74,5 +74,6 @@ reldist(a, b) = norm(a - b) / norm(a)
 
     @testset "Plotting" begin
         plot_network(TrafficAssignmentProblem("SiouxFalls"))
+        plot_network_osm(TrafficAssignmentProblem("SiouxFalls"))
     end
 end
