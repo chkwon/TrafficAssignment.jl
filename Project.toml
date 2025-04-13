@@ -14,14 +14,19 @@ FrankWolfe = "f55ce6ea-fdc5-4628-88c5-0087fe54bd30"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-MapTiles = "fea52e5a-b371-463b-85f5-81770daa2737"
-Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Proj = "c94c279d-25a6-4763-9509-64d165bea63e"
 SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[weakdeps]
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
+
+[extensions]
+TrafficAssignmentMakieExt = "Makie"
+TrafficAssignmentTylerExt = ["Makie", "Tyler"]
 
 [compat]
 Aqua = "0.8.11"
@@ -41,10 +46,9 @@ JuliaFormatter = "2.1"
 Libdl = "1"
 LinearAlgebra = "1"
 Makie = "0.22.4"
-MapTiles = "1.0.2"
-Optim = "1.12"
 OrderedCollections = "1.1"
 Printf = "1"
+Proj = "1.8.1"
 SimpleWeightedGraphs = "1.5.0"
 SparseArrays = "1"
 Test = "1"

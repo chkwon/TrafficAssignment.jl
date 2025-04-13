@@ -41,8 +41,9 @@ $(TYPEDFIELDS)
     od_pairs::Vector{Tuple{Int,Int}}
 
     # node table
-    X::C
-    Y::C
+    node_longitude::C
+    node_latitude::C
+    valid_coordinates::Bool
 
     # flow table
     optimal_flow_volume::F

@@ -190,18 +190,37 @@ function TrafficAssignmentProblem(
     # node table
 
     if !isnothing(node_file)
-        X = fill(NaN, number_of_nodes)
-        Y = fill(NaN, number_of_nodes)
         coord_lines = readlines(node_file)
         if startswith(lowercase(coord_lines[1]), "node")
             coord_lines = @view(coord_lines[2:end])
         end
         coord_lines_split = split.(coord_lines, Ref(r"[\t ]+"))
-        X = parse.(Float64, getindex.(coord_lines_split, 2))
-        Y = parse.(Float64, getindex.(coord_lines_split, 3))
+        x = parse.(Float64, getindex.(coord_lines_split, 2))
+        y = parse.(Float64, getindex.(coord_lines_split, 3))
+        source_crs = if occursin("Birmingham", instance_name)
+            "EPSG:27700"  # right
+        elseif occursin("chicago", lowercase(instance_name))
+            "EPSG:26771"  # slightly off
+        elseif instance_name in ("GoldCoast", "SiouxFalls", "Sydney")
+            "WGS84"
+        else
+            nothing
+        end
+        if source_crs !== nothing
+            trans = Proj.Transformation(source_crs, "WGS84"; always_xy=true)
+            longlat = trans.(collect(zip(x, y)))
+            node_longitude = first.(longlat)
+            node_latitude = last.(longlat)
+            valid_coordinates = true
+        else
+            node_longitude = x
+            node_latitude = y
+            valid_coordinates = false
+        end
     else
-        X = nothing
-        Y = nothing
+        node_longitude = nothing
+        node_latitude = nothing
+        valid_coordinates = false
     end
 
     if !isnothing(flow_file) && instance_name != "chicago-regional"
@@ -245,8 +264,9 @@ function TrafficAssignmentProblem(
         total_od_flow,
         travel_demand,
         od_pairs,
-        X,
-        Y,
+        node_longitude,
+        node_latitude,
+        valid_coordinates,
         optimal_flow_volume,
         optimal_flow_cost,
         toll_factor,
