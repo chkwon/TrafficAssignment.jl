@@ -22,6 +22,11 @@ function instance_files(instance_name::AbstractString)
         end
     end
 
+    if instance_name == "Munich"
+        # https://github.com/bstabler/TransportationNetworks/issues/59
+        net_file, trips_file = trips_file, net_file
+    end
+
     @assert !isnothing(net_file)
     @assert !isnothing(trips_file)
 
@@ -55,137 +60,114 @@ function TrafficAssignmentProblem(
     number_of_nodes = 0
     first_thru_node = 0
 
-    (;
-        init_node,
-        term_node,
-        capacity,
-        link_length,
-        free_flow_time,
-        b,
-        power,
-        speed_limit,
-        toll,
-        link_type,
-    ) = open(net_file, "r") do f
-        while (line = readline(f)) != ""
-            if occursin("<NUMBER OF ZONES>", line)
-                number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<NUMBER OF NODES>", line)
-                number_of_nodes = parse(Int, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<FIRST THRU NODE>", line)
-                first_thru_node = parse(Int, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<NUMBER OF LINKS>", line)
-                number_of_links = parse(Int, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<END OF METADATA>", line)
-                break
-            end
+    any_nb_of_spaces = r"[ \t]+"
+
+    header_row = 0
+    net_lines = readlines(net_file)
+    for (k, line) in enumerate(net_lines)
+        if startswith(line, "<NUMBER OF ZONES>")
+            number_of_zones = parse(Int, split(line, any_nb_of_spaces)[4])
+        elseif startswith(line, "<NUMBER OF NODES>")
+            number_of_nodes = parse(Int, split(line, any_nb_of_spaces)[4])
+        elseif startswith(line, "<NUMBER OF LINKS>")
+            number_of_links = parse(Int, split(line, any_nb_of_spaces)[4])
+        elseif startswith(line, "<FIRST THRU NODE>")
+            first_thru_node = parse(Int, split(line, any_nb_of_spaces)[4])
+        elseif startswith(line, "~")
+            header_row = k
+            break
         end
+    end
+    if number_of_zones == 0
+        number_of_zones = number_of_nodes
+    end
+    net_col_names = string.(split(net_lines[header_row], any_nb_of_spaces))
+    if first(net_col_names) == "~" &&
+        !startswith(net_lines[header_row + 1], any_nb_of_spaces)
+        # first column is not empty
+        deleteat!(net_col_names, 1)
+    end
+    net_df = DataFrame(
+        CSV.File(
+            net_file;
+            delim='\t',
+            skipto=header_row + 1,
+            header=net_col_names,
+            maxwarnings=1,
+            silencewarnings=true,
+            drop=(i, name) -> i > length(net_col_names),
+        ),
+    )
+    @assert size(net_df, 1) == number_of_links
 
-        @assert number_of_links > 0
-
-        init_node = zeros(Int, number_of_links)
-        term_node = zeros(Int, number_of_links)
-        capacity = zeros(Float64, number_of_links)
-        link_length = zeros(Float64, number_of_links)
-        free_flow_time = zeros(Float64, number_of_links)
-        b = zeros(Float64, number_of_links)
-        power = zeros(Float64, number_of_links)
-        speed_limit = zeros(Float64, number_of_links)
-        toll = zeros(Float64, number_of_links)
-        link_type = zeros(Int, number_of_links)
-
-        idx = 1
-        while !eof(f)
-            line = readline(f)
-            if occursin("~", line) || line == ""
-                continue
-            end
-
-            if occursin(";", line)
-                line = strip(line, [' ', '\n', ';'])
-                line = replace(line, ";" => "")
-
-                numbers = split(line)
-                init_node[idx] = parse(Int, numbers[1])
-                term_node[idx] = parse(Int, numbers[2])
-                capacity[idx] = parse(Float64, numbers[3])
-                link_length[idx] = parse(Float64, numbers[4])
-                free_flow_time[idx] = parse(Float64, numbers[5])
-                b[idx] = parse(Float64, numbers[6])
-                power[idx] = parse(Float64, numbers[7])
-                speed_limit[idx] = parse(Float64, numbers[8])
-                toll[idx] = parse(Float64, numbers[9])
-                link_type[idx] = Int(round(parse(Float64, numbers[10])))
-
-                idx = idx + 1
-            end
+    n, m = number_of_nodes, number_of_links
+    I = net_df[!, :init_node]
+    J = net_df[!, :term_node]
+    capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
+    link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
+    free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
+    speed_limit = sparse(I, J, float.(net_df[!, :speed]), n, n)
+    if ==(extrema(net_df[!, :b])...)
+        b = float(first(net_df[!, :b]))  # single b value
+    else
+        b = sparse(I, J, float.(net_df[!, :b]), n, n)
+    end
+    if ==(extrema(net_df[!, :power])...)
+        power = float(first(net_df[!, :power]))  # single power value
+    else
+        power = sparse(I, J, float.(net_df[!, :power]), n, n)
+    end
+    if "toll" in names(net_df)
+        toll = sparse(I, J, float.(net_df[!, :toll]), n, n)
+    else
+        toll = missing
+    end
+    if "link_type" in names(net_df)
+        link_type_nzval = if eltype(net_df[!, :link_type]) <: AbstractString
+            # in some instances, the semicolon is stuck at the end
+            parse.(Int, strip.(net_df[!, :link_type], ';'))
+        else
+            net_df[!, :link_type]
         end
-
-        return (;
-            init_node,
-            term_node,
-            capacity,
-            link_length,
-            free_flow_time,
-            b,
-            power,
-            speed_limit,
-            toll,
-            link_type,
-        )
+        link_type = sparse(I, J, link_type_nzval, n, n)
+    else
+        link_type = missing
     end
 
     # trips table
-
     number_of_zones_trip = 0
     total_od_flow = 0
 
-    (; travel_demand, od_pairs) = open(trips_file, "r") do f
-        while (line = readline(f)) != ""
-            if occursin("<NUMBER OF ZONES>", line)
-                number_of_zones_trip = parse(Int, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<TOTAL OD FLOW>", line)
-                total_od_flow = parse(Float64, line[(search_sc(line, '>') + 1):end])
-            elseif occursin("<END OF METADATA>", line)
-                break
-            end
-        end
+    travel_demand = zeros(Float64, number_of_zones, number_of_zones)
+    od_pairs = Tuple{Int,Int}[]
 
-        @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
-        @assert total_od_flow > 0
-
-        travel_demand = zeros(Float64, number_of_zones, number_of_zones)
-        od_pairs = Tuple{Int,Int}[]
-
-        origin = -1
-
-        while !eof(f)
-            line = readline(f)
-
-            if line == ""
-                origin = -1
-                continue
-            elseif occursin("Origin", line)
-                origin = parse(Int, split(line)[2])
-            elseif occursin(";", line)
-                pairs = split(line, ";")
-                for i in 1:size(pairs)[1]
-                    if occursin(":", pairs[i])
-                        pair = split(pairs[i], ":")
-                        destination = parse(Int, strip(pair[1]))
-                        od_flow = parse(Float64, strip(pair[2]))
-
-                        # println("origin=$origin, destination=$destination, flow=$od_flow")
-
-                        travel_demand[origin, destination] = od_flow
-                        push!(od_pairs, (origin, destination))
-                    end
+    trips_lines = readlines(trips_file)
+    origin = -1
+    for (k, line) in enumerate(trips_lines)
+        if startswith(line, "<NUMBER OF ZONES>")
+            number_of_zones_trip = parse(Int, split(line, any_nb_of_spaces)[4])
+        elseif startswith(line, "<TOTAL OD FLOW>")
+            total_od_flow = parse(Float64, split(line, any_nb_of_spaces)[4])
+        elseif line == ""
+            origin = -1
+        elseif occursin("Origin", line)
+            origin = parse(Int, split(line)[2])
+        elseif occursin(";", line)
+            pairs = split(line, ";")
+            for i in 1:size(pairs)[1]
+                if occursin(":", pairs[i])
+                    pair = split(pairs[i], ":")
+                    destination = parse(Int, strip(pair[1]))
+                    od_flow = parse(Float64, strip(pair[2]))
+                    travel_demand[origin, destination] = od_flow
+                    push!(od_pairs, (origin, destination))
                 end
             end
         end
-
-        return (; travel_demand, od_pairs)
     end
+
+    @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
+    @assert total_od_flow > 0
 
     # node table
 
@@ -251,16 +233,14 @@ function TrafficAssignmentProblem(
         number_of_nodes,
         first_thru_node,
         number_of_links,
-        init_node,
-        term_node,
-        capacity=sparse(init_node, term_node, capacity, n, n),
-        link_length=sparse(init_node, term_node, link_length, n, n),
-        free_flow_time=sparse(init_node, term_node, free_flow_time, n, n),
-        b=sparse(init_node, term_node, b, n, n),
-        power=sparse(init_node, term_node, power, n, n),
-        speed_limit=sparse(init_node, term_node, speed_limit, n, n),
-        toll=sparse(init_node, term_node, toll, n, n),
-        link_type=sparse(init_node, term_node, link_type, n, n),
+        capacity,
+        link_length,
+        free_flow_time,
+        b,
+        power,
+        speed_limit,
+        toll,
+        link_type,
         total_od_flow,
         travel_demand,
         od_pairs,
@@ -302,6 +282,7 @@ Return a `DataFrame` summarizing the dimensions of all available instances.
 function summarize_instances()
     df = DataFrame(; instance=String[], valid=Bool[], zones=Int[], nodes=Int[], links=Int[])
     for instance in list_instances()
+        yield()
         valid = false
         number_of_zones, number_of_nodes, number_of_links = (-1, -1, -1)
         try

@@ -1,3 +1,5 @@
+const R = Float64
+
 """
 $(TYPEDEF)
 
@@ -14,9 +16,15 @@ The generalized cost is `cost = travel_time + toll_factor * toll + distance_fact
 $(TYPEDFIELDS)
 """
 @kwdef struct TrafficAssignmentProblem{
-    C<:Union{Nothing,Vector{Float64}},F<:Union{Nothing,SparseMatrixCSC{Float64,Int}}
+    B<:Union{R,SparseMatrixCSC{R,Int}},
+    P<:Union{R,SparseMatrixCSC{R,Int}},
+    T<:Union{Missing,SparseMatrixCSC{R,Int}},
+    L<:Union{Missing,SparseMatrixCSC{Int,Int}},
+    C<:Union{Nothing,Vector{Float64}},
+    F<:Union{Nothing,SparseMatrixCSC{R,Int}},
 }
     instance_name::String
+    dataset_name::String = "TransportationNetworks"
 
     # network table
     number_of_zones::Int
@@ -24,20 +32,18 @@ $(TYPEDFIELDS)
     first_thru_node::Int
     number_of_links::Int
 
-    init_node::Vector{Int}
-    term_node::Vector{Int}
-    capacity::SparseMatrixCSC{Float64,Int}
-    link_length::SparseMatrixCSC{Float64,Int}
-    free_flow_time::SparseMatrixCSC{Float64,Int}
-    b::SparseMatrixCSC{Float64,Int}
-    power::SparseMatrixCSC{Float64,Int}
-    speed_limit::SparseMatrixCSC{Float64,Int}
-    toll::SparseMatrixCSC{Float64,Int}
-    link_type::SparseMatrixCSC{Int,Int}
+    capacity::SparseMatrixCSC{R,Int}
+    link_length::SparseMatrixCSC{R,Int}
+    free_flow_time::SparseMatrixCSC{R,Int}
+    speed_limit::SparseMatrixCSC{R,Int}
+    b::B
+    power::P
+    toll::T
+    link_type::L
 
     # trips table
-    total_od_flow::Float64
-    travel_demand::Matrix{Float64}
+    total_od_flow::R
+    travel_demand::Matrix{R}
     od_pairs::Vector{Tuple{Int,Int}}
 
     # node table
@@ -50,8 +56,8 @@ $(TYPEDFIELDS)
     optimal_flow_cost::F
 
     # cost parameters
-    toll_factor::Float64
-    distance_factor::Float64
+    toll_factor::R
+    distance_factor::R
 end
 
 function Base.show(io::IO, problem::TrafficAssignmentProblem)
