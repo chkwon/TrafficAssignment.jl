@@ -1,5 +1,5 @@
 """
-$(SIGNATURES)
+    plot_network(problem::TrafficAssignmentProblem; zones=false, tiles=false)
 
 Plot a transportation network, possibly on top of real-world map tiles.
 

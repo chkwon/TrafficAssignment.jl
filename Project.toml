@@ -1,13 +1,14 @@
 name = "TrafficAssignment"
 uuid = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
-authors = ["Changhyun Kwon"]
-version = "0.6.4"
+authors = ["Changhyun Kwon", "Guillaume Dalle"]
+version = "0.7.0"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 FrankWolfe = "f55ce6ea-fdc5-4628-88c5-0087fe54bd30"
@@ -35,6 +36,7 @@ CSV = "0.10.15"
 CairoMakie = "0.13.4"
 DataDeps = "0.7.13"
 DataFrames = "1.7"
+DataFramesMeta = "0.15.4"
 DelimitedFiles = "1"
 Distributed = "1"
 DocStringExtensions = "0.9.4"

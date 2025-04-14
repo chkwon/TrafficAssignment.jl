@@ -2,13 +2,14 @@ using Documenter
 using TrafficAssignment
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
-TrafficAssignmentProblem("SiouxFalls")
+TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
+TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco")
 
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md"); force=true)
 
 makedocs(;
     modules=[TrafficAssignment],
-    authors="Changhyun Kwon",
+    authors="Changhyun Kwon, Guillaume Dalle",
     sitename="TrafficAssignment.jl",
     format=Documenter.HTML(),
     pages=["Home" => "index.md", "tutorial.md", "api.md"],

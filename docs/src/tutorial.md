@@ -20,7 +20,9 @@ pretty_table(summarize_instances())
 To download and parse one, just specify its name inside the [`TrafficAssignmentProblem`](@ref) constructor:
 
 ```@example tuto
-problem = TrafficAssignmentProblem("SiouxFalls")
+dataset_name = "TransportationNetworks"
+instance_name = "SiouxFalls"
+problem = TrafficAssignmentProblem(dataset_name, instance_name)
 ```
 
 ## Visualization
@@ -28,7 +30,7 @@ problem = TrafficAssignmentProblem("SiouxFalls")
 You can visualize instances as follows:
 
 ```@example tuto
-plot_network(problem)
+plot_network(problem; zones=false, tiles=false)
 ```
 
 ## Solution

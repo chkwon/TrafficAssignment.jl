@@ -1,10 +1,14 @@
 """
-$(SIGNATURES)
+    instance_files(dataset_name, instance_name)
 
-Return a named tuple `(; flow_file, net_file, node_file, trips_file)` containing the absolute paths to the 4 data tables of an instance.
+Return a named tuple containing the absolute paths to the individual data tables of an instance.
 """
-function instance_files(instance_name::AbstractString)
-    instance_dir = datapath(instance_name)
+function instance_files(dataset_name::AbstractString, instance_name::AbstractString)
+    return _instance_files(Val(Symbol(dataset_name)), instance_name)
+end
+
+function _instance_files(::Val{:TransportationNetworks}, instance_name)
+    instance_dir = datapath("TransportationNetworks", instance_name)
     @assert ispath(instance_dir)
 
     flow_file = net_file = node_file = trips_file = nothing
@@ -31,28 +35,52 @@ function instance_files(instance_name::AbstractString)
     return (; flow_file, net_file, node_file, trips_file)
 end
 
+function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
+    instance_dir = datapath("UnifiedTrafficDataset", instance_name)
+    @assert ispath(instance_dir)
+    city = strip(instance_name, vcat('_', getindex.(Ref("0123456789"), 1:10)))
+    node_file = joinpath(instance_dir, "01_Input_data", "$(city)_node.csv")
+    link_file = joinpath(instance_dir, "01_Input_data", "$(city)_link.csv")
+    od_file = joinpath(instance_dir, "01_Input_data", "$(city)_od.csv")
+    return (; node_file, link_file, od_file)
+end
+
 """
-$(SIGNATURES)
+    TrafficAssignmentProblem(dataset_name, instance_name)
 
 User-friendly constructor for [`TrafficAssignmentProblem`](@ref).
 
-The provided `instance_name` must be one of the subfolders in [https://github.com/bstabler/TransportationNetworks](https://github.com/bstabler/TransportationNetworks).
+!!! tip
 
-When you run this function for the first time, the DataDeps package will ask you to confirm download.
-If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
+    When you run this function for the first time, the DataDeps package will ask you to confirm download.
+    If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
 """
 function TrafficAssignmentProblem(
-    instance_name::AbstractString; toll_factor::Real=0.0, distance_factor::Real=0.0
+    dataset_name::AbstractString, instance_name::AbstractString;
 )
-    (; net_file, trips_file, node_file, flow_file) = instance_files(instance_name)
+    if !(dataset_name in DATASET_NAMES)
+        throw(ArgumentError("The dataset name must be one of $DATASET_NAMES"))
+    end
+    return _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name)
+end
+
+function _TrafficAssignmentProblem(
+    ::Val{:TransportationNetworks},
+    instance_name,
+    toll_factor::Real=0.0,
+    distance_factor::Real=0.0,
+)
+    (; net_file, trips_file, node_file, flow_file) = instance_files(
+        "TransportationNetworks", instance_name
+    )
     @assert ispath(net_file)
     @assert ispath(trips_file)
 
     # network table
 
-    number_of_zones = 0
-    number_of_links = 0
-    number_of_nodes = 0
+    nb_zones = 0
+    nb_links = 0
+    nb_nodes = 0
     first_thru_node = 0
 
     any_nb_of_spaces = r"[ \t]+"
@@ -61,11 +89,11 @@ function TrafficAssignmentProblem(
     net_lines = readlines(net_file)
     for (k, line) in enumerate(net_lines)
         if startswith(line, "<NUMBER OF ZONES>")
-            number_of_zones = parse(Int, split(line, any_nb_of_spaces)[4])
+            nb_zones = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "<NUMBER OF NODES>")
-            number_of_nodes = parse(Int, split(line, any_nb_of_spaces)[4])
+            nb_nodes = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "<NUMBER OF LINKS>")
-            number_of_links = parse(Int, split(line, any_nb_of_spaces)[4])
+            nb_links = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "<FIRST THRU NODE>")
             first_thru_node = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "~")
@@ -73,9 +101,10 @@ function TrafficAssignmentProblem(
             break
         end
     end
-    if number_of_zones == 0
-        number_of_zones = number_of_nodes
-    end
+
+    zone_nodes = 1:(first_thru_node - 1)
+    real_nodes = first_thru_node:nb_nodes
+
     net_col_names = string.(split(net_lines[header_row], any_nb_of_spaces))
     if first(net_col_names) == "~" &&
         !startswith(net_lines[header_row + 1], any_nb_of_spaces)
@@ -93,30 +122,30 @@ function TrafficAssignmentProblem(
             drop=(i, name) -> i > length(net_col_names),
         ),
     )
-    @assert size(net_df, 1) == number_of_links
+    @assert size(net_df, 1) == nb_links
 
-    n, m = number_of_nodes, number_of_links
+    n, m = nb_nodes, nb_links
     I = net_df[!, :init_node]
     J = net_df[!, :term_node]
 
-    capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
+    link_capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
     link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
-    free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
-    speed_limit = sparse(I, J, float.(net_df[!, :speed]), n, n)
+    link_free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
+    link_speed_limit = sparse(I, J, float.(net_df[!, :speed]), n, n)
     if ==(extrema(net_df[!, :b])...)
-        b = float(first(net_df[!, :b]))  # single b value
+        link_bpr_mult = float(first(net_df[!, :b]))  # single b value
     else
-        b = sparse(I, J, float.(net_df[!, :b]), n, n)
+        link_bpr_mult = sparse(I, J, float.(net_df[!, :b]), n, n)
     end
     if ==(extrema(net_df[!, :power])...)
-        power = float(first(net_df[!, :power]))  # single power value
+        link_bpr_power = float(first(net_df[!, :power]))  # single power value
     else
-        power = sparse(I, J, float.(net_df[!, :power]), n, n)
+        link_bpr_power = sparse(I, J, float.(net_df[!, :power]), n, n)
     end
     if "toll" in names(net_df)
-        toll = sparse(I, J, float.(net_df[!, :toll]), n, n)
+        link_toll = sparse(I, J, float.(net_df[!, :toll]), n, n)
     else
-        toll = missing
+        link_toll = missing
     end
     if "link_type" in names(net_df)
         link_type_nzval = if eltype(net_df[!, :link_type]) <: AbstractString
@@ -131,16 +160,16 @@ function TrafficAssignmentProblem(
     end
 
     # trips table
-    number_of_zones_trip = 0
+    nb_zones_trip = 0
     total_od_flow = 0
 
-    travel_demand = Dict{Tuple{Int,Int},Float64}()
+    demand = Dict{Tuple{Int,Int},Float64}()
 
     trips_lines = readlines(trips_file)
     origin = -1
     for line in trips_lines
         if startswith(line, "<NUMBER OF ZONES>")
-            number_of_zones_trip = parse(Int, split(line, any_nb_of_spaces)[4])
+            nb_zones_trip = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "<TOTAL OD FLOW>")
             total_od_flow = parse(Float64, split(line, any_nb_of_spaces)[4])
         elseif line == ""
@@ -154,13 +183,13 @@ function TrafficAssignmentProblem(
                     pair = split(pairs[i], ":")
                     destination = parse(Int, strip(pair[1]))
                     od_flow = parse(Float64, strip(pair[2]))
-                    travel_demand[origin, destination] = od_flow
+                    demand[origin, destination] = od_flow
                 end
             end
         end
     end
 
-    @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
+    @assert nb_zones_trip == nb_zones # Check if nb_zone is same in both txt files
     @assert total_od_flow > 0
 
     # node table
@@ -172,7 +201,7 @@ function TrafficAssignmentProblem(
         end
         coord_lines_split = split.(coord_lines, Ref(r"[\t ]+"))
         inds = parse.(Int, getindex.(coord_lines_split, 1))
-        @assert inds == 1:number_of_nodes
+        @assert inds == 1:nb_nodes
         x = parse.(Float64, getindex.(coord_lines_split, 2))
         y = parse.(Float64, getindex.(coord_lines_split, 3))
         source_crs = if occursin("Birmingham", instance_name)
@@ -186,117 +215,218 @@ function TrafficAssignmentProblem(
         end
         if source_crs !== nothing
             trans = Proj.Transformation(source_crs, "WGS84"; always_xy=true)
-            longlat = trans.(collect(zip(x, y)))
-            node_x = first.(longlat)
-            node_y = last.(longlat)
+            node_coord = trans.(collect(zip(x, y)))
             valid_longitude_latitude = true
         else
-            node_x = x
-            node_y = y
+            node_coord = collect(zip(x, y))
             valid_longitude_latitude = false
         end
     else
-        node_x = missing
-        node_y = missing
+        node_coord = missing
         valid_longitude_latitude = false
     end
 
     if !isnothing(flow_file) && instance_name != "chicago-regional"
-        optimal_flow = DataFrame(CSV.File(flow_file))
-        optimal_flow_volume = sparse(
-            optimal_flow[!, "From "],
-            optimal_flow[!, "To "],
-            optimal_flow[!, "Volume "],
-            number_of_nodes,
-            number_of_nodes,
-        )
-        optimal_flow_cost = sparse(
-            optimal_flow[!, "From "],
-            optimal_flow[!, "To "],
-            optimal_flow[!, "Cost "],
-            number_of_nodes,
-            number_of_nodes,
-        )
+        optimal_flow_df = DataFrame(CSV.File(flow_file))
+        I, J = optimal_flow_df[!, "From "], optimal_flow_df[!, "To "]
+        optimal_flow = sparse(I, J, optimal_flow_df[!, "Volume "], n, n)
+        optimal_flow_cost = sparse(I, J, optimal_flow_df[!, "Cost "], n, n)
     else
-        optimal_flow_volume = nothing
-        optimal_flow_cost = nothing
+        optimal_flow = missing
+        optimal_flow_cost = missing
     end
 
     return TrafficAssignmentProblem(;
+        dataset_name="TransportationNetworks",
         instance_name,
-        number_of_zones,
-        number_of_nodes,
-        first_thru_node,
-        number_of_links,
-        capacity,
-        link_length,
-        free_flow_time,
-        b,
-        power,
-        speed_limit,
-        toll,
-        link_type,
-        total_od_flow,
-        travel_demand,
-        node_x,
-        node_y,
+        # nodes
+        nb_nodes,
+        nb_links,
+        real_nodes,
+        zone_nodes,
+        node_coord,
         valid_longitude_latitude,
-        optimal_flow_volume,
-        optimal_flow_cost,
+        # links
+        link_capacity,
+        link_length,
+        link_free_flow_time,
+        link_speed_limit,
+        link_bpr_mult,
+        link_bpr_power,
+        link_toll,
+        link_type,
+        # demand
+        demand,
+        # cost
         toll_factor,
         distance_factor,
+        # solution
+        optimal_flow,
+    )
+end
+
+function _TrafficAssignmentProblem(
+    ::Val{:UnifiedTrafficDataset},
+    instance_name,
+    toll_factor::Real=0.0,
+    distance_factor::Real=0.0,
+)
+    files = TrafficAssignment.instance_files("UnifiedTrafficDataset", instance_name)
+    city = instance_name[4:end]
+
+    # nodes
+
+    node_df = DataFrame(CSV.File(files.node_file::String))
+    node_df[!, :New_Node_ID] = 1:size(node_df, 1)
+
+    nb_nodes = size(node_df, 1)
+    node_coord = collect(zip(node_df[!, :Lon], node_df[!, :Lat]))
+
+    min_zone_node, max_zone_node = extrema(
+        @rsubset(node_df, :Tract_Node == true)[!, :New_Node_ID]
+    )
+    zone_nodes = min_zone_node:max_zone_node
+    real_nodes = 1:(min_zone_node - 1)
+
+    # links
+
+    link_df = DataFrame(CSV.File(files.link_file))
+    link_df[!, :Free_Flow_Time] =
+        (60 / 1000) .* link_df[!, :Length] ./ link_df[!, :Free_Speed]
+    link_df = leftjoin(
+        link_df, node_df[:, [1, 5]]; on=:From_Node_ID => :Node_ID, renamecols="" => "_From"
+    )
+    link_df = leftjoin(
+        link_df, node_df[:, [1, 5]]; on=:To_Node_ID => :Node_ID, renamecols="" => "_To"
+    )
+
+    nb_links = size(link_df, 1)
+
+    n = nb_nodes
+    I, J = link_df[!, :New_Node_ID_From], link_df[!, :New_Node_ID_To]
+    link_capacity = sparse(I, J, link_df[!, :Capacity], n, n)
+    link_length = sparse(I, J, link_df[!, :Length], n, n)
+    link_free_flow_time = sparse(I, J, link_df[!, :Free_Flow_Time], n, n)
+    link_speed_limit = sparse(I, J, link_df[!, :Free_Speed], n, n)
+    link_type = sparse(I, J, link_df[!, :Link_Type], n, n)
+
+    bpr_df = DataFrame(
+        CSV.File(joinpath(dirname(@__DIR__), "data", "UnifiedTrafficDataset", "bpr.csv"))
+    )
+
+    link_bpr_mult = only(@rsubset(bpr_df, :city == city)[!, :bpr_alpha])
+    link_bpr_power = only(@rsubset(bpr_df, :city == city)[!, :bpr_beta])
+
+    # demand
+
+    od_df = DataFrame(CSV.File(files.od_file))
+
+    od_df = leftjoin(od_df, node_df[:, [1, 5]]; on=:O_ID => :Node_ID, renamecols="" => "_O")
+    od_df = leftjoin(od_df, node_df[:, [1, 5]]; on=:D_ID => :Node_ID, renamecols="" => "_D")
+
+    demand = Dict(
+        collect(zip(od_df[!, :New_Node_ID_O], od_df[!, :New_Node_ID_D])) .=>
+            od_df[!, :OD_Number],
+    )
+
+    return TrafficAssignmentProblem(;
+        dataset_name="UnifiedTrafficDataset",
+        instance_name,
+        # nodes
+        nb_nodes,
+        nb_links,
+        real_nodes,
+        zone_nodes,
+        node_coord,
+        valid_longitude_latitude=true,
+        # links
+        link_capacity,
+        link_length,
+        link_free_flow_time,
+        link_speed_limit,
+        link_bpr_mult,
+        link_bpr_power,
+        link_toll=missing,
+        link_type,
+        # demand
+        demand,
+        # cost
+        toll_factor=missing,
+        distance_factor=missing,
+        # solution
+        optimal_flow=missing,
     )
 end
 
 """
-$(SIGNATURES)
+    list_instances()
+    list_instances(dataset_name)
 
-Return a list of available instance names.
+Return a list of the available instances, given as a tuple with their dataset.
 """
-function list_instances()
-    data_dir = datapath()
-    names = String[]
-    for potential_name in readdir(data_dir)
-        isdir(joinpath(data_dir, potential_name)) || continue
-        for instance_file in readdir(joinpath(data_dir, potential_name))
-            if endswith(instance_file, ".tntp")
-                push!(names, potential_name)
-                break
+function list_instances(dataset_name::AbstractString)
+    data_dir = datapath(dataset_name)
+    if dataset_name == "TransportationNetworks"
+        instance_names = String[]
+        for potential_name in readdir(data_dir)
+            isdir(joinpath(data_dir, potential_name)) || continue
+            for instance_file in readdir(joinpath(data_dir, potential_name))
+                if endswith(instance_file, ".tntp")
+                    push!(instance_names, potential_name)
+                    break
+                end
             end
         end
+        return [(dataset_name, instance_name) for instance_name in instance_names]
+    else
+        return [(dataset_name, instance_name) for instance_name in readdir(data_dir)]
     end
-    return names
 end
 
-"""
-$(SIGNATURES)
+list_instances() = mapreduce(list_instances, vcat, DATASET_NAMES)
 
-Return a `DataFrame` summarizing the dimensions of all available instances.
 """
-function summarize_instances()
-    df = DataFrame(; instance=String[], valid=Bool[], zones=Int[], nodes=Int[], links=Int[])
-    for instance in list_instances()
+    summarize_instances()
+    summarize_instances(dataset_name)
+
+Return a `DataFrame` summarizing the dimensions of the available instances inside a datase.
+"""
+function summarize_instances(dataset_name::AbstractString)
+    df = DataFrame(;
+        dataset=String[],
+        instance=String[],
+        valid=Bool[],
+        nodes=Int[],
+        links=Int[],
+        zones=Int[],
+    )
+    for (_, instance_name) in list_instances(dataset_name)
         yield()
         valid = false
-        number_of_zones, number_of_nodes, number_of_links = (-1, -1, -1)
+        nn, nl, nz = (-1, -1, -1)
         try
-            problem = TrafficAssignmentProblem(instance)
+            problem = TrafficAssignmentProblem(dataset_name, instance_name)
             valid = true
-            (; number_of_zones, number_of_nodes, number_of_links) = problem
+            nn = nb_nodes(problem)
+            nl = nb_links(problem)
+            nz = nb_zones(problem)
         catch exception
-            @warn "Loading $instance failed" exception
+            @warn "Loading $instance_name from $dataset_name failed" exception
             # nothing
         end
         push!(
             df,
             (;
-                instance,
+                dataset=dataset_name,
+                instance=instance_name,
                 valid,
-                zones=number_of_zones,
-                nodes=number_of_nodes,
-                links=number_of_links,
+                nodes=nn,
+                links=nl,
+                zones=nz,
             ),
         )
     end
     return df
 end
+
+summarize_instances() = mapreduce(summarize_instances, vcat, DATASET_NAMES)

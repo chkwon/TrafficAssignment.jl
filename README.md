@@ -16,8 +16,9 @@ To install the latest development version, run this in your Julia Pkg REPL:
 pkg> add https://github.com/gdalle/TrafficAssignment.jl
 ```
 
-Check out the documentation for details.
+Check out the [documentation](https://gdalle.github.io/TrafficAssignment.jl/dev/) to know what to do next.
 
 ## Credits
 
 This package was originally written and maintained by [Changhyun Kwon](http://www.chkwon.net).
+It has been adapted and is now maintained by [Guillaume Dalle](https://gdalle.github.io/).

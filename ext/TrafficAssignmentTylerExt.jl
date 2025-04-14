@@ -4,7 +4,8 @@ using Makie
 using TrafficAssignment
 using Tyler
 
-function TrafficAssignment.add_tiles!(fig, ax, node_longitude, node_latitude)
+function TrafficAssignment.add_tiles!(fig, ax, node_coord)
+    node_longitude, node_latitude = first.(node_coord), last.(node_coord)
     minlong, maxlong = extrema(node_longitude)
     minlat, maxlat = extrema(node_latitude)
     Δlong = maxlong - minlong
