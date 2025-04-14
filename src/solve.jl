@@ -1,3 +1,6 @@
+mynz(A::SparseMatrixCSC) = nonzeros(A)
+mynz(a::Number) = a
+
 function sparse_by_link(problem::TrafficAssignmentProblem, nzval::AbstractVector)
     A = problem.free_flow_time
     return SparseMatrixCSC(A.m, A.n, A.colptr, A.rowval, nzval)
@@ -6,18 +9,18 @@ end
 function link_travel_time(problem::TrafficAssignmentProblem, flow::AbstractMatrix)
     (; free_flow_time, b, capacity, power) = problem
     travel_time_nz =
-        nonzeros(free_flow_time) .*
-        (1 .+ nonzeros(b) .* (nonzeros(flow) ./ nonzeros(capacity)) .^ nonzeros(power))
+        mynz(free_flow_time) .*
+        (1 .+ mynz(b) .* (mynz(flow) ./ mynz(capacity)) .^ mynz(power))
     return sparse_by_link(problem, travel_time_nz)
 end
 
 function link_travel_time_integral(problem::TrafficAssignmentProblem, flow::AbstractMatrix)
     (; free_flow_time, b, capacity, power) = problem
     travel_time_integral_nz =
-        nonzeros(free_flow_time) .* (
-            nonzeros(flow) .+
-            ((nonzeros(b) .* nonzeros(capacity)) ./ (nonzeros(power) .+ 1)) .*
-            (nonzeros(flow) ./ nonzeros(capacity)) .^ (nonzeros(power) .+ 1)
+        mynz(free_flow_time) .* (
+            mynz(flow) .+
+            ((mynz(b) .* mynz(capacity)) ./ (mynz(power) .+ 1)) .*
+            (mynz(flow) ./ mynz(capacity)) .^ (mynz(power) .+ 1)
         )
     return sparse_by_link(problem, travel_time_integral_nz)
 end
@@ -39,7 +42,7 @@ end
 
 function objective_gradient(problem::TrafficAssignmentProblem, flow_vec::AbstractVector)
     flow = sparse_by_link(problem, flow_vec)
-    return nonzeros(link_travel_time(problem, flow))
+    return mynz(link_travel_time(problem, flow))
 end
 
 """
@@ -70,18 +73,18 @@ function FrankWolfe.compute_extreme_point(
 )
     yield()
     (; problem, heuristic_dists) = spo
-    (; od_pairs, travel_demand) = problem
+    (; travel_demand) = problem
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost)
     flow = similar(cost)
     flow .= 0
-    for (o, d) in od_pairs
+    for (o, d) in keys(travel_demand)
         path = a_star(graph, o, d, weights(graph), v -> heuristic_dists[v, d])
         for edge in path
             flow[src(edge), dst(edge)] += travel_demand[o, d]
         end
     end
-    return nonzeros(flow)
+    return mynz(flow)
 end
 
 """

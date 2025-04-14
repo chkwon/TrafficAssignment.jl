@@ -2,6 +2,7 @@ module TrafficAssignmentMakieExt
 
 using Makie
 using Proj
+using SparseArrays
 using TrafficAssignment
 import TrafficAssignment as TA
 
@@ -12,21 +13,22 @@ function TrafficAssignment.plot_network(problem::TrafficAssignmentProblem; tiles
         instance_name,
         number_of_nodes,
         number_of_links,
-        node_longitude,
-        node_latitude,
-        valid_coordinates,
-        init_node,
-        term_node,
+        capacity,
+        node_x,
+        node_y,
+        valid_longitude_latitude,
     ) = problem
-    if valid_coordinates
+    if valid_longitude_latitude
+        node_longitude, node_latitude = node_x, node_y
         trans = Proj.Transformation("WGS84", WebMercator; always_xy=true)
         XY = trans.(collect(zip(node_longitude, node_latitude)))
         X, Y = first.(XY), last.(XY)
     else
-        X, Y = node_longitude, node_latitude
+        X, Y = node_x, node_y
     end
-    X_segments = collect(Iterators.flatten(zip(X[init_node], X[term_node])))
-    Y_segments = collect(Iterators.flatten(zip(Y[init_node], Y[term_node])))
+    I, J, _ = findnz(capacity)
+    X_segments = collect(Iterators.flatten(zip(X[I], X[J])))
+    Y_segments = collect(Iterators.flatten(zip(Y[I], Y[J])))
     fig = Figure()
     ax = Axis(
         fig[1, 1];
@@ -38,7 +40,8 @@ function TrafficAssignment.plot_network(problem::TrafficAssignmentProblem; tiles
     hidespines!(ax)
     sc = scatter!(ax, Point2f.(collect(zip(X, Y))); color=:black)
     ls = linesegments!(ax, Point2f.(collect(zip(X_segments, Y_segments))); color=:black)
-    if tiles && valid_coordinates
+    if tiles && valid_longitude_latitude
+        node_longitude, node_latitude = node_x, node_y
         TA.add_tiles!(fig, ax, node_longitude, node_latitude)
         translate!(sc, 0, 0, 10)
         translate!(ls, 0, 0, 10)

@@ -11,7 +11,7 @@ makedocs(;
     authors="Changhyun Kwon",
     sitename="TrafficAssignment.jl",
     format=Documenter.HTML(),
-    pages=["Home" => "index.md", "api.md"],
+    pages=["Home" => "index.md", "tutorial.md", "api.md"],
 )
 
 deploydocs(; repo="github.com/gdalle/TrafficAssignment.jl", devbranch="master")
