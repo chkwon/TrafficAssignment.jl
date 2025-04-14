@@ -20,7 +20,7 @@ $(TYPEDFIELDS)
     P<:Union{R,SparseMatrixCSC{R,Int}},
     T<:Union{Missing,SparseMatrixCSC{R,Int}},
     L<:Union{Missing,SparseMatrixCSC{Int,Int}},
-    C<:Union{Nothing,Vector{Float64}},
+    C<:Union{Missing,Vector{Float64}},
     F<:Union{Nothing,SparseMatrixCSC{R,Int}},
 }
     instance_name::String
@@ -43,13 +43,12 @@ $(TYPEDFIELDS)
 
     # trips table
     total_od_flow::R
-    travel_demand::Matrix{R}
-    od_pairs::Vector{Tuple{Int,Int}}
+    travel_demand::Dict{Tuple{Int,Int},R}
 
     # node table
-    node_longitude::C
-    node_latitude::C
-    valid_coordinates::Bool
+    node_x::C
+    node_y::C
+    valid_longitude_latitude::Bool
 
     # flow table
     optimal_flow_volume::F

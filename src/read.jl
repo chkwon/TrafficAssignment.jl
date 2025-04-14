@@ -1,5 +1,3 @@
-search_sc(s, c) = something(findfirst(isequal(c), s), 0)
-
 """
 $(SIGNATURES)
 
@@ -11,13 +9,13 @@ function instance_files(instance_name::AbstractString)
 
     flow_file = net_file = node_file = trips_file = nothing
     for f in readdir(instance_dir; join=true)
-        if occursin("_flow", lowercase(f)) && occursin(".tntp", lowercase(f))
+        if occursin("_flow", lowercase(f)) && endswith(lowercase(f), ".tntp")
             flow_file = f
-        elseif occursin("_net", lowercase(f)) && occursin(".tntp", lowercase(f))
+        elseif occursin("_net", lowercase(f)) && endswith(lowercase(f), ".tntp")
             net_file = f
-        elseif occursin("_node", lowercase(f)) && occursin(".tntp", lowercase(f))
+        elseif occursin("_node", lowercase(f)) && endswith(lowercase(f), ".tntp")
             node_file = f
-        elseif occursin("_trips", lowercase(f)) && occursin(".tntp", lowercase(f))
+        elseif occursin("_trips", lowercase(f)) && endswith(lowercase(f), ".tntp")
             trips_file = f
         end
     end
@@ -44,12 +42,9 @@ When you run this function for the first time, the DataDeps package will ask you
 If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
 """
 function TrafficAssignmentProblem(
-    instance_name::AbstractString,
-    files::NamedTuple=instance_files(instance_name);
-    toll_factor::Real=0.0,
-    distance_factor::Real=0.0,
+    instance_name::AbstractString; toll_factor::Real=0.0, distance_factor::Real=0.0
 )
-    (; net_file, trips_file, node_file, flow_file) = files
+    (; net_file, trips_file, node_file, flow_file) = instance_files(instance_name)
     @assert ispath(net_file)
     @assert ispath(trips_file)
 
@@ -103,6 +98,7 @@ function TrafficAssignmentProblem(
     n, m = number_of_nodes, number_of_links
     I = net_df[!, :init_node]
     J = net_df[!, :term_node]
+
     capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
     link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
     free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
@@ -138,12 +134,11 @@ function TrafficAssignmentProblem(
     number_of_zones_trip = 0
     total_od_flow = 0
 
-    travel_demand = zeros(Float64, number_of_zones, number_of_zones)
-    od_pairs = Tuple{Int,Int}[]
+    travel_demand = Dict{Tuple{Int,Int},Float64}()
 
     trips_lines = readlines(trips_file)
     origin = -1
-    for (k, line) in enumerate(trips_lines)
+    for line in trips_lines
         if startswith(line, "<NUMBER OF ZONES>")
             number_of_zones_trip = parse(Int, split(line, any_nb_of_spaces)[4])
         elseif startswith(line, "<TOTAL OD FLOW>")
@@ -160,7 +155,6 @@ function TrafficAssignmentProblem(
                     destination = parse(Int, strip(pair[1]))
                     od_flow = parse(Float64, strip(pair[2]))
                     travel_demand[origin, destination] = od_flow
-                    push!(od_pairs, (origin, destination))
                 end
             end
         end
@@ -177,6 +171,8 @@ function TrafficAssignmentProblem(
             coord_lines = @view(coord_lines[2:end])
         end
         coord_lines_split = split.(coord_lines, Ref(r"[\t ]+"))
+        inds = parse.(Int, getindex.(coord_lines_split, 1))
+        @assert inds == 1:number_of_nodes
         x = parse.(Float64, getindex.(coord_lines_split, 2))
         y = parse.(Float64, getindex.(coord_lines_split, 3))
         source_crs = if occursin("Birmingham", instance_name)
@@ -191,18 +187,18 @@ function TrafficAssignmentProblem(
         if source_crs !== nothing
             trans = Proj.Transformation(source_crs, "WGS84"; always_xy=true)
             longlat = trans.(collect(zip(x, y)))
-            node_longitude = first.(longlat)
-            node_latitude = last.(longlat)
-            valid_coordinates = true
+            node_x = first.(longlat)
+            node_y = last.(longlat)
+            valid_longitude_latitude = true
         else
-            node_longitude = x
-            node_latitude = y
-            valid_coordinates = false
+            node_x = x
+            node_y = y
+            valid_longitude_latitude = false
         end
     else
-        node_longitude = nothing
-        node_latitude = nothing
-        valid_coordinates = false
+        node_x = missing
+        node_y = missing
+        valid_longitude_latitude = false
     end
 
     if !isnothing(flow_file) && instance_name != "chicago-regional"
@@ -226,7 +222,6 @@ function TrafficAssignmentProblem(
         optimal_flow_cost = nothing
     end
 
-    n = number_of_nodes
     return TrafficAssignmentProblem(;
         instance_name,
         number_of_zones,
@@ -243,10 +238,9 @@ function TrafficAssignmentProblem(
         link_type,
         total_od_flow,
         travel_demand,
-        od_pairs,
-        node_longitude,
-        node_latitude,
-        valid_coordinates,
+        node_x,
+        node_y,
+        valid_longitude_latitude,
         optimal_flow_volume,
         optimal_flow_cost,
         toll_factor,
