@@ -1,5 +1,8 @@
 # TrafficAssignment.jl
 
+>[!WARNING]
+>This package is no longer actively maintained. A newer version is available at <https://github.com/gdalle/TrafficAssignment.jl>.
+
 [![Build Status](https://github.com/chkwon/TrafficAssignment.jl/workflows/CI/badge.svg?branch=master)](https://github.com/chkwon/TrafficAssignment.jl/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/chkwon/TrafficAssignment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/chkwon/TrafficAssignment.jl)
 
